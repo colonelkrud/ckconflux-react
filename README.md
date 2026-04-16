@@ -90,4 +90,4 @@ This repo intentionally avoids embedding Helm files so it remains a clean app/im
 
 ## Dependency lockfile hygiene
 
-This repository uses **npm** (not yarn/pnpm). When dependencies change, run `npm install` and commit the updated `package-lock.json`. Both CI and Docker builds use `npm ci`, which will fail if `package.json` and `package-lock.json` are out of sync.
+This repository uses **npm** (not yarn/pnpm). When dependencies change, run `npm install` and commit the updated `package-lock.json`. Both CI and Docker builds use `npm ci --include=dev`, which will fail if `package.json` and `package-lock.json` are out of sync and also ensures test/build devDependencies are installed.
