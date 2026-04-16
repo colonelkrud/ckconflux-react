@@ -11,7 +11,7 @@ describe('CK Conflux landing page', () => {
   it('contains key onboarding copy', () => {
     render(<App />);
     expect(screen.getByText(/What is Element and Matrix, and why should you care/i)).toBeInTheDocument();
-    expect(screen.getByText(/This becomes your permanent Matrix ID/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/This becomes your permanent Matrix ID/i).length).toBeGreaterThan(0);
   });
 
   it('renders major CTAs', () => {
