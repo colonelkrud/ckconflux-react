@@ -4,12 +4,27 @@ function usePrefersReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      setPrefersReducedMotion(false);
+      return undefined;
+    }
+
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
+    setPrefersReducedMotion(Boolean(mediaQuery.matches));
 
     const handleChange = (event) => setPrefersReducedMotion(event.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+
+    return undefined;
   }, []);
 
   return prefersReducedMotion;
@@ -183,22 +198,33 @@ export default function CkConfluxLandingPage() {
 
   const learnSections = [
     {
-      title: 'Start with Element chat',
-      body: 'Use Element Web at element.ckconflux.com for messaging, rooms, spaces, file sharing, voice messages, and secure direct chats. It is the easiest place for most people to begin.',
-      cta: 'Open Element Web',
+      title: 'Element on Matrix',
+      label: 'Default for most people',
+      body: 'Think Discord-style communities, channels, direct messages, and calls, but with an open Matrix account you keep. Start here for day-to-day chat and community coordination.',
+      cta: 'Start with Element Web',
       href: 'https://element.ckconflux.com',
+      secondaryCta: 'Element user guide',
+      secondaryHref: 'https://element.io/en/user-guide',
     },
     {
-      title: 'Join Mastodon for social updates',
-      body: 'Mastodon is a federated social network, similar to Twitter or Bluesky in day-to-day use, but community-run. Register on masto.colonelkrud.com to follow updates, discover people, and join conversations beyond chat rooms.',
+      title: 'Mastodon',
+      label: 'Best for social updates',
+      body: 'Mastodon is closer to Twitter or Bluesky than Discord chat. Use it for posts, discovery, and following people across many communities while keeping your home account here.',
       cta: 'Register for Mastodon',
       href: 'https://masto.colonelkrud.com/auth/sign_up',
+      secondaryCta: 'Mastodon user guide',
+      secondaryHref: 'https://docs.joinmastodon.org/user/',
+      note: 'New accounts require manual approval.',
     },
     {
-      title: 'Use TeamSpeak for voice-first sessions',
-      body: 'TeamSpeak is still one of the best tools for low-overhead voice chat for gaming and live coordination. Download the client, then connect to ts3.ckconflux.com to join the server.',
+      title: 'TeamSpeak',
+      label: 'Best for voice-first coordination',
+      body: 'If your group is voice-first, TeamSpeak is the fastest route from install to talking. It is a strong fit for gaming, raids, and live ops where low latency matters.',
       cta: 'Download TeamSpeak',
       href: 'https://www.teamspeak.com/en/downloads/',
+      secondaryCta: 'TeamSpeak getting started',
+      secondaryHref: 'https://www.teamspeak.com/en/support/get-started/',
+      note: 'Server address: ts3.ckconflux.com',
     },
   ];
 
@@ -245,47 +271,91 @@ export default function CkConfluxLandingPage() {
   const faqs = [
     {
       q: 'What should I use first?',
-      a: 'Start with Element Web at element.ckconflux.com. That is the main chat experience for messaging, rooms, communities, voice, and video.',
+      a: 'Start with Element Web at element.ckconflux.com. It is the default choice for chat, DMs, communities, voice, and video.',
     },
     {
-      q: 'What is my username?',
-      a: 'Your permanent Matrix ID is called an MXID. It looks like @yourname:ckconflux.com. It does not change later, but your display name can.',
+      q: 'What is MatrixRTC / Element Call?',
+      a: 'MatrixRTC is the real-time calling tech used in Matrix. In Element, this shows up as Element Call for room-based voice and video meetings.',
     },
     {
-      q: 'Why do you ask for email verification?',
-      a: 'Email verification helps confirm that you control the account and gives you a recovery path if you lose access later.',
+      q: 'Does Element support screen sharing?',
+      a: 'Yes. Screen sharing is available in Element calls on supported platforms and browsers.',
     },
     {
-      q: 'Is this basically Discord?',
-      a: 'For most people, yes in everyday use. You still get communities, rooms, DMs, media sharing, and calls. The big difference is stronger privacy, open standards, and community ownership.',
+      q: 'Can I use different display names in different rooms?',
+      a: 'Usually you set one profile display name for your account, but some clients and room settings can show room-specific profile info. Your MXID stays the same either way.',
     },
     {
-      q: 'What is a room, space, or call room?',
-      a: 'A space is like a Discord server. A room is like a channel. A call room gives you voice or video inside the Matrix room flow instead of making voice chat feel like a separate product.',
+      q: 'How do direct messages work in Element?',
+      a: 'Use the Start Chat / New Message option, pick a user, and Element creates a private DM room between you and that person.',
     },
     {
-      q: 'Can I discover communities outside this server?',
-      a: 'Yes. Matrix lets you join public rooms and spaces from other servers, so your account on ckconflux.com can still participate across the wider network.',
+      q: 'How do I invite friends with registration codes?',
+      a: 'Share a registration code from an existing member with your friend, then they use it during account creation on element.ckconflux.com.',
     },
     {
-      q: 'How do I join Mastodon here?',
-      a: 'Go to masto.colonelkrud.com and register for an account. Accounts are manually approved so expect a review step before access is granted.',
-    },
-    {
-      q: 'How do I join TeamSpeak?',
-      a: 'Install the TeamSpeak client, open it, choose to connect to a server, and enter ts3.ckconflux.com as the server address.',
+      q: 'Can registration codes be revoked?',
+      a: 'Yes. Registration codes are access controls and can be revoked if abused, spammed, or shared in bad faith.',
     },
     {
       q: 'How do I get a registration token?',
       a: 'New Matrix accounts need a registration token. You can request one from an existing member, or get token access through any supported tier at buymeacoffee.com/conflux.',
     },
     {
+      q: 'Can I discover communities outside this server?',
+      a: 'Yes. Your ckconflux.com account can join public Matrix rooms and spaces hosted on other servers.',
+    },
+    {
+      q: 'Can I use another Matrix client besides Element?',
+      a: 'Yes. You are not locked to one app. Popular options include Element X (iOS/Android), Nheko (Windows/macOS/Linux), Element Web/Desktop (Web/Windows/macOS/Linux), FluffyChat (iOS/Android/Linux/Web), and Cinny (Web with desktop packaging available).',
+    },
+    {
+      q: 'What mobile apps can I use for Element?',
+      a: 'Element has official mobile apps for iOS and Android, and your same account can also be used in compatible Matrix clients.',
+    },
+    {
+      q: 'What mobile apps can I use for Mastodon?',
+      a: 'You can use the official Mastodon app on iOS and Android, or other compatible Mastodon apps if you prefer.',
+    },
+    {
+      q: 'Is there a mobile app for TeamSpeak?',
+      a: 'Yes. TeamSpeak offers mobile clients, and you can still use desktop clients for longer sessions.',
+    },
+    {
+      q: 'TeamSpeak 6 vs TeamSpeak 3: which should I use?',
+      a: 'Use whichever client works best for your setup. Both are common in the community, so choose based on stability and features you prefer.',
+    },
+    {
+      q: 'How do I report content in Mastodon?',
+      a: 'Open the post or account menu and use Report. Include context so moderators can review quickly.',
+    },
+    {
+      q: 'How do I report content in Element?',
+      a: 'Use the message or user actions menu in Element and choose Report. If needed, also contact server moderators with room links and timestamps.',
+    },
+    {
+      q: 'How do I report content in TeamSpeak?',
+      a: 'Report the issue to server admins or moderators with usernames, channel details, and time of incident.',
+    },
+    {
+      q: 'How do I ignore users in Element?',
+      a: 'Open the user profile and add them to your ignore list. This hides messages and reduces unwanted contact.',
+    },
+    {
+      q: 'How do I ignore users in Mastodon?',
+      a: 'Use Mute for a softer filter or Block for a stronger stop. Both options are available from a user profile menu.',
+    },
+    {
+      q: 'How do notification settings work in Element?',
+      a: 'You can tune notifications globally and per room, including mute, mentions-only, and custom alert rules.',
+    },
+    {
       q: 'Do files stay forever?',
-      a: 'You can send images and files just like Discord. If a file is accessed regularly, it stays available. If no one views it for over a year, it is automatically removed. We used to store files forever, but storage costs became too high to sustain long term.',
+      a: 'You can send images and files like Discord. If a file is accessed regularly, it stays available. If no one views it for over a year, it is automatically removed.',
     },
     {
       q: 'How is moderation handled?',
-      a: 'Moderation is best effort. CK Conflux uses Draupnir for community moderation, which is part of the Matrix moderation ecosystem and helps with coordinated, shared protections across rooms and communities. We also participate in the Mastodon Garden Fence Project blocklist ecosystem. The goal is to reduce abuse, spam, and harmful content, but moderation is never perfect.',
+      a: 'Moderation is best effort. CK Conflux uses Draupnir for community moderation and participates in the Garden Fence blocklist ecosystem to reduce abuse, spam, and harmful content.',
     },
   ];
 
@@ -519,56 +589,29 @@ export default function CkConfluxLandingPage() {
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Get started by service</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Choose the tool that matches how you want to connect</h2>
-              <p className="mt-4 text-lg leading-8 text-slate-300">Chat, social posting, and voice each have a different job. The easiest acquisition path is to explain the benefit first, then the next action.</p>
             </div>
             <div className="mt-10 grid gap-6 lg:grid-cols-3">
               {learnSections.map((section) => (
-                <a
+                <div
                   key={section.title}
-                  href={section.href}
                   className="group block rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/[0.07]"
                 >
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">{section.label}</div>
                   <h3 className="text-xl font-semibold text-white">{section.title}</h3>
                   <p className="mt-3 leading-7 text-slate-300">{section.body}</p>
-                  <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cyan-200">{section.cta}</div>
-                </a>
+                  {section.note && <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">{section.note}</div>}
+                  <div className="mt-5 space-y-2 text-sm text-cyan-200">
+                    <a href={section.href} className="block font-medium">
+                      {section.cta}
+                    </a>
+                    {section.secondaryCta && section.secondaryHref && (
+                      <a href={section.secondaryHref} className="block">
+                        {section.secondaryCta}
+                      </a>
+                    )}
+                  </div>
+                </div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
-              <h3 className="mt-5 text-xl font-semibold text-white">Element on Matrix</h3>
-              <p className="mt-3 leading-7 text-slate-300">Best for persistent chat, communities, direct messages, media sharing, spaces, voice messages, and secure collaboration. Great default choice for most users.</p>
-              <div className="mt-5 space-y-2 text-sm text-cyan-200">
-                <a href="https://element.ckconflux.com" className="block">Open Element Web</a>
-                <a href="https://element.io/en/user-guide" className="block">Element user guide</a>
-              </div>
-            </div>
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
-              <div className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">Best for social updates</div>
-              <h3 className="mt-5 text-xl font-semibold text-white">Mastodon</h3>
-              <p className="mt-3 leading-7 text-slate-300">Best for public posting, following updates, and lightweight social discovery. It is a federated social network, which means you can follow people across many servers while keeping your home account here.</p>
-              <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">New accounts require manual approval.</div>
-              <div className="mt-5 space-y-2 text-sm text-cyan-200">
-                <a href="https://masto.colonelkrud.com/auth/sign_up" className="block">Register on Mastodon</a>
-                <a href="https://docs.joinmastodon.org/user/" className="block">Mastodon user guide</a>
-              </div>
-            </div>
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
-              <div className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">Best for voice coordination</div>
-              <h3 className="mt-5 text-xl font-semibold text-white">TeamSpeak</h3>
-              <p className="mt-3 leading-7 text-slate-300">Best for low-latency voice sessions, gaming, and live coordination. If your group is voice-first, this is the fastest path from install to talking.</p>
-              <div className="mt-5 space-y-2 text-sm text-cyan-200">
-                <a href="https://www.teamspeak.com/en/downloads/" className="block">Download TeamSpeak</a>
-                <a href="https://www.teamspeak.com/en/support/get-started/" className="block">TeamSpeak getting started guide</a>
-                <div className="pt-1 text-slate-400">Server address: <span className="font-medium text-white">ts3.ckconflux.com</span></div>
-              </div>
             </div>
           </div>
         </section>
