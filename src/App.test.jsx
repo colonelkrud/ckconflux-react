@@ -16,8 +16,8 @@ describe('CK Conflux landing page', () => {
 
   it('renders major CTAs', () => {
     render(<App />);
-    expect(screen.getByRole('link', { name: /Start with Element/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Register for Mastodon/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Download TeamSpeak/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Start with Element$/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Register on Mastodon$/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Download TeamSpeak$/i })).toBeInTheDocument();
   });
 });
