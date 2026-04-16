@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 function usePrefersReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      setPrefersReducedMotion(false);
       return undefined;
     }
 
@@ -19,24 +18,80 @@ function usePrefersReducedMotion() {
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
 
-    if (typeof mediaQuery.addListener === 'function') {
-      mediaQuery.addListener(handleChange);
-      return () => mediaQuery.removeListener(handleChange);
-    }
-
-    return undefined;
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
   }, []);
 
   return prefersReducedMotion;
 }
 
+function usePathname() {
+  const [pathname, setPathname] = useState(() => window.location.pathname);
+
+  useEffect(() => {
+    const onPopState = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  return pathname;
+}
+
+function LegalLayout({ title, lastUpdated, children }) {
+  return (
+    <section className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <header className="rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{title}</h1>
+        <p className="mt-2 text-sm text-slate-300">Last updated {lastUpdated}</p>
+      </header>
+      <div className="mt-6 space-y-5 text-sm leading-7 text-slate-200 sm:text-base">{children}</div>
+    </section>
+  );
+}
+
 const signUpFields = [
-  { key: 'username', label: 'Choose a username', value: '@yourname:ckconflux.com', helper: 'This becomes your permanent Matrix ID, also called your MXID. Your display name can change later, but your MXID does not.' },
-  { key: 'password', label: 'Create a safe password', value: 'correct-horse-battery-lantern', helper: 'Use a long passphrase that is easy for you to remember. We require a strong-but-usable password score.' },
-  { key: 'email', label: 'Add your email', value: '[email protected]', helper: 'Used for verification and account recovery.' },
+  { key: 'username', label: 'Choose a username', value: '@yourname:ckconflux.com', helper: 'Permanent Matrix ID (MXID).' },
+  { key: 'password', label: 'Create a password', value: 'correct-horse-battery-lantern', helper: 'Use a long, memorable passphrase.' },
+  { key: 'email', label: 'Add your email', value: '[email protected]', helper: 'For verification and recovery.' },
 ];
 
-export function SignUpFlowCard() {
+function AccordionItem({ title, children, defaultOpen = false }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const contentId = useId();
+  const buttonId = useId();
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03]">
+      <h3>
+        <button
+          id={buttonId}
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls={contentId}
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between gap-4 rounded-2xl px-4 py-4 text-left text-base font-semibold text-white transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+        >
+          <span>{title}</span>
+          <span className="text-cyan-200">{isOpen ? '−' : '+'}</span>
+        </button>
+      </h3>
+      <div
+        id={contentId}
+        role="region"
+        aria-labelledby={buttonId}
+        hidden={!isOpen}
+        aria-hidden={!isOpen}
+        className={`px-4 pb-4 text-sm leading-6 text-slate-300 ${isOpen ? 'animate-[fadeIn_.2s_ease-out]' : ''}`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+void AccordionItem;
+
+function SignUpFlowCard() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const cardRef = useRef(null);
   const [hasEnteredView, setHasEnteredView] = useState(false);
@@ -70,11 +125,7 @@ export function SignUpFlowCard() {
 
     if (prefersReducedMotion) {
       setVisibleFields(signUpFields.length + 1);
-      setTypedValues({
-        username: signUpFields[0].value,
-        password: signUpFields[1].value,
-        email: signUpFields[2].value,
-      });
+      setTypedValues({ username: signUpFields[0].value, password: signUpFields[1].value, email: signUpFields[2].value });
       setCaptchaChecked(true);
       return undefined;
     }
@@ -88,29 +139,25 @@ export function SignUpFlowCard() {
         timers.push(id);
       });
 
-    const runSequence = async () => {
-      await wait(350);
+    const run = async () => {
+      await wait(240);
       for (let i = 0; i < signUpFields.length; i += 1) {
         const field = signUpFields[i];
         setVisibleFields(i + 1);
-        await wait(250);
-        for (let charIndex = 1; charIndex <= field.value.length; charIndex += 1) {
-          if (cancelled) {
-            return;
-          }
-          const partialValue = field.value.slice(0, charIndex);
-          setTypedValues((prev) => ({ ...prev, [field.key]: partialValue }));
-          await wait(38);
+        await wait(180);
+        for (let c = 1; c <= field.value.length; c += 1) {
+          if (cancelled) return;
+          setTypedValues((prev) => ({ ...prev, [field.key]: field.value.slice(0, c) }));
+          await wait(28);
         }
-        await wait(700);
+        await wait(350);
       }
-
       setVisibleFields(signUpFields.length + 1);
-      await wait(900);
+      await wait(450);
       setCaptchaChecked(true);
     };
 
-    runSequence();
+    run();
 
     return () => {
       cancelled = true;
@@ -119,561 +166,571 @@ export function SignUpFlowCard() {
   }, [hasEnteredView, prefersReducedMotion]);
 
   return (
-    <div ref={cardRef} className="rounded-[1.8rem] border border-cyan-300/20 bg-slate-900/90 p-6 shadow-2xl shadow-cyan-950/30">
-      <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Simple, secure sign up</div>
-      <h3 className="mt-3 text-2xl font-semibold text-white">matrix auth</h3>
-      <div className="mt-6 space-y-4">
+    <div ref={cardRef} className="rounded-[1.6rem] border border-cyan-300/20 bg-slate-900/90 p-4 shadow-2xl shadow-cyan-950/30 sm:p-6">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">Preview: account setup</p>
+      <h3 className="mt-2 text-xl font-semibold text-white">Create your Matrix account</h3>
+      <div className="mt-4 space-y-3">
         {signUpFields.map((field, index) => {
           const isVisible = visibleFields > index;
           const value = typedValues[field.key];
           return (
-            <div key={field.key} className={`rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="text-sm font-medium text-slate-300">{field.label}</div>
-              <div className="mt-2 flex h-11 items-center rounded-xl border border-white/10 bg-slate-950 px-3 font-mono text-sm text-slate-100">
-                {value}
+            <div key={field.key} className={`rounded-xl border border-white/10 bg-white/[0.04] p-3 transition duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="text-sm font-medium text-slate-200">{field.label}</div>
+              <div className="mt-2 flex h-10 items-center rounded-lg border border-white/10 bg-slate-950 px-3 font-mono text-xs text-slate-100 sm:text-sm">
+                <span className="truncate">{value}</span>
                 {isVisible && value.length < field.value.length && <span className="ml-0.5 inline-block h-4 w-px animate-pulse bg-cyan-200" />}
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-400">{field.helper}</p>
+              <p className="mt-2 text-xs text-slate-400">{field.helper}</p>
             </div>
           );
         })}
 
-        <div className={`rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition duration-500 ${visibleFields > signUpFields.length ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="text-sm font-medium text-slate-300">Complete CAPTCHA</div>
-          <div className="mt-2 rounded-xl border border-white/15 bg-slate-950/90 p-3">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className={`flex h-6 w-6 items-center justify-center rounded border text-sm transition ${captchaChecked ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300' : 'border-slate-500 bg-slate-800 text-transparent'}`}>
-                  ✓
-                </div>
-                <span className="text-sm text-slate-100">I am human</span>
+        <div className={`rounded-xl border border-white/10 bg-white/[0.04] p-3 transition duration-500 ${visibleFields > signUpFields.length ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="text-sm font-medium text-slate-200">Complete CAPTCHA</div>
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-white/15 bg-slate-950/90 p-3">
+            <div className="flex items-center gap-3 text-sm text-slate-100">
+              <div className={`flex h-6 w-6 items-center justify-center rounded border text-sm ${captchaChecked ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300' : 'border-slate-500 bg-slate-800 text-transparent'}`}>
+                ✓
               </div>
-              <div className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-400">CAPTCHA</div>
+              <span>I am human</span>
             </div>
+            <span className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-400">CAPTCHA</span>
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-400">This helps keep bots and spam out.</p>
         </div>
       </div>
-      <p className="mt-5 text-sm leading-6 text-slate-300">After that, verify your email and continue into Element Web.</p>
-      <a
-        href="https://buymeacoffee.com/conflux"
-        className="mt-4 inline-flex rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5"
-      >
-        Get a registration token
-      </a>
     </div>
   );
 }
 
-export default function CkConfluxLandingPage() {
-  const matrixFeatures = [
-    {
-      title: 'Private by design',
-      body: 'Element is a secure messenger built on Matrix, an open communication network designed for encrypted, decentralised chat and calling. It gives you a modern app experience without locking your identity into one company.',
-    },
-    {
-      title: 'Feels familiar if you use Discord',
-      body: 'You get rooms, direct messages, spaces, file sharing, voice, video, and communities. The difference is that your identity travels with you as @user:ckconflux.com instead of being trapped inside a single platform.',
-    },
-    {
-      title: 'Built-in voice and video',
-      body: 'Element supports voice and video calling, including Element Call for modern MatrixRTC-based calling and fallback VoIP support for wider compatibility across clients.',
-    },
-  ];
+const faqItems = [
+  {
+    q: 'What should I use first?',
+    a: (
+      <p>
+        Start with <a className="font-semibold text-cyan-200 underline" href="https://element.ckconflux.com">element.ckconflux.com</a>. It is the default path for chat, DMs, spaces, voice, and video. Most users should complete onboarding there first, then optionally add Mastodon or TeamSpeak.
+      </p>
+    ),
+  },
+  {
+    q: 'What is MatrixRTC / Element Call?',
+    a: (
+      <p>
+        MatrixRTC is Matrix real-time calling technology. In Element this appears as Element Call for room-based voice/video. It keeps calls in your room workflow instead of forcing separate apps.
+      </p>
+    ),
+  },
+  { q: 'Does Element support screen sharing?', a: <p>Yes, on supported browsers/platforms. Start a call, choose share screen/window/tab, then confirm permission prompts.</p> },
+  {
+    q: 'Can I use different display names in different rooms?',
+    a: <p>Your MXID stays fixed (for example @name:ckconflux.com). Your display name is usually global, though some clients/room settings can present room-specific profile details.</p>,
+  },
+  {
+    q: 'How do direct messages work in Element?',
+    a: <p>Use Start Chat/New Message, select a user, and Element creates a DM room. DM rooms still follow Matrix safety/reporting tools and server rules.</p>,
+  },
+  {
+    q: 'How do I invite friends with registration codes?',
+    a: <p>Share a registration code from an approved source. Your friend opens element.ckconflux.com, chooses Create account, and enters the code during signup.</p>,
+  },
+  {
+    q: 'Can registration codes be revoked?',
+    a: <p>Yes. Codes are access controls and may be revoked for abuse, spam, or policy violations. See <a className="font-semibold text-cyan-200 underline" href="/terms">Terms of Use</a>.</p>,
+  },
+  {
+    q: 'How do I get a registration token?',
+    a: <p>Ask an existing member or use a supported tier at <a className="font-semibold text-cyan-200 underline" href="https://buymeacoffee.com/conflux">Buy Me a Coffee</a>.</p>,
+  },
+  {
+    q: 'Can I discover communities outside this server?',
+    a: <p>Yes. Matrix is federated. Start with your local room directory, then discover remote/public rooms via <a className="font-semibold text-cyan-200 underline" href="https://matrixrooms.info/">matrixrooms.info</a>.</p>,
+  },
+  {
+    q: 'Can I use another Matrix client besides Element?',
+    a: <p>Yes. You are not locked into one app. Matrix supports many clients; browse options at <a className="font-semibold text-cyan-200 underline" href="https://matrix.org/ecosystem/clients/">matrix.org/ecosystem/clients</a>.</p>,
+  },
+  {
+    q: 'What mobile apps can I use?',
+    a: <p>Recommended mobile start is Element X (iOS/Android). Your account can also work with other Matrix clients from the ecosystem list. For web, use element.ckconflux.com.</p>,
+  },
+  {
+    q: 'What mobile apps can I use for Mastodon?',
+    a: <p>Use the official Mastodon app or other compatible apps depending on iOS/Android preferences. App features vary, but account compatibility is broad.</p>,
+  },
+  {
+    q: 'Is there a mobile app for TeamSpeak?',
+    a: <p>Yes. TeamSpeak has mobile clients, and desktop clients remain best for longer sessions and advanced setups.</p>,
+  },
+  {
+    q: 'TeamSpeak 6 vs TeamSpeak 3?',
+    a: <p>Both are used. If you want modern UI, try TeamSpeak 6 first. If your workflow or plugin setup depends on TS3 stability, TS3 remains acceptable.</p>,
+  },
+  {
+    q: 'How do I report content in Mastodon?',
+    a: <p>Use Report from post/account menus, include context, and reference policy concerns when needed. Community conduct standards are in <a className="font-semibold text-cyan-200 underline" href="/rules">Server Rules</a>.</p>,
+  },
+  {
+    q: 'How do I report content in Element?',
+    a: <p>Use message/user actions to report, then provide room links/timestamps to moderators if needed. Enforcement references <a className="font-semibold text-cyan-200 underline" href="/rules">Server Rules</a> and <a className="font-semibold text-cyan-200 underline" href="/terms">Terms of Use</a>.</p>,
+  },
+  {
+    q: 'How do I report content in TeamSpeak?',
+    a: <p>Report to server admins/moderators with usernames, channel details, and time of incident. Behavioral expectations are described in the <a className="font-semibold text-cyan-200 underline" href="/rules">Server Rules</a>.</p>,
+  },
+  {
+    q: 'How do I ignore users in Element?',
+    a: <p>Open user profile → add to ignore list. This hides messages and reduces unwanted contact. For persistent harassment, report using moderation flows and the Rules/Terms pages.</p>,
+  },
+  {
+    q: 'How do I ignore users in Mastodon?',
+    a: <p>Use Mute for softer filtering or Block for stronger prevention. If behavior violates policy, submit a report and reference applicable <a className="font-semibold text-cyan-200 underline" href="/rules">Rules</a>.</p>,
+  },
+  {
+    q: 'How do notifications work in Element?',
+    a: <p>Configure both global and per-room settings (mute, mentions-only, custom rules). Tune noisy rooms first so onboarding rooms stay useful.</p>,
+  },
+  {
+    q: 'Do files stay forever?',
+    a: <p>Do not assume indefinite retention. Storage and retention are best-effort and may vary by policy, server operations, and federation behavior. See the <a className="font-semibold text-cyan-200 underline" href="/privacy">Privacy Policy</a> and <a className="font-semibold text-cyan-200 underline" href="/terms">Terms of Use</a>.</p>,
+  },
+  {
+    q: 'How is moderation handled?',
+    a: <p>Moderation is best-effort with tools like Draupnir plus admin review. Actions can include content removal or account restrictions. Community expectations live in <a className="font-semibold text-cyan-200 underline" href="/rules">Server Rules</a>; enforcement and account obligations are in <a className="font-semibold text-cyan-200 underline" href="/terms">Terms</a>.</p>,
+  },
+];
 
-  const onboardingSteps = [
-    {
-      title: 'What is Element and Matrix?',
-      body: 'Element is the app you use. Matrix is the open network underneath it. Think of it like using a modern chat app on a network that is not owned by a single company.',
-    },
-    {
-      title: 'Why should I care?',
-      body: 'You get a Discord-like experience with more control over privacy, identity, and community ownership. No ads, less lock-in, and a healthier long-term home for communities.',
-    },
-    {
-      title: 'How do I sign in?',
-      body: 'Open Element Web, create an account, choose your username and password, complete the CAPTCHA, verify your email, and you are in.',
-    },
-  ];
+function HomePage() {
+  return (
+    <>
+      <section className="relative overflow-hidden border-b border-white/10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.2),transparent_38%),radial-gradient(circle_at_80%_15%,rgba(168,85,247,0.18),transparent_24%)]" />
+        <div className="relative mx-auto grid w-full max-w-6xl gap-8 px-4 py-14 sm:px-6 md:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
+          <div className="max-w-2xl">
+            <p className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200 sm:text-sm">Discord-like, with more privacy and ownership</p>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">Private community chat and calls without platform lock-in.</h1>
+            <p className="mt-4 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">CK Conflux is built around Element on Matrix. Start there first, then add Mastodon or TeamSpeak if needed.</p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a href="https://element.ckconflux.com" className="rounded-xl bg-cyan-400 px-5 py-3 text-center text-base font-semibold text-slate-950 shadow-xl shadow-cyan-500/25 transition hover:-translate-y-0.5">Start with Element</a>
+              <a href="#signin" className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-center text-base font-semibold text-white transition hover:bg-white/10">View sign-in steps</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  const learnSections = [
-    {
-      title: 'Element on Matrix',
-      label: 'Default for most people',
-      body: 'Think Discord-style communities, channels, direct messages, and calls, but with an open Matrix account you keep. Start here for day-to-day chat and community coordination.',
-      cta: 'Start with Element Web',
-      href: 'https://element.ckconflux.com',
-      secondaryCta: 'Element user guide',
-      secondaryHref: 'https://element.io/en/user-guide',
-    },
-    {
-      title: 'Mastodon',
-      label: 'Best for social updates',
-      body: 'Mastodon is closer to Twitter or Bluesky than Discord chat. Use it for posts, discovery, and following people across many communities while keeping your home account here.',
-      cta: 'Register for Mastodon',
-      href: 'https://masto.colonelkrud.com/auth/sign_up',
-      secondaryCta: 'Mastodon user guide',
-      secondaryHref: 'https://docs.joinmastodon.org/user/',
-      note: 'New accounts require manual approval.',
-    },
-    {
-      title: 'TeamSpeak',
-      label: 'Best for voice-first coordination',
-      body: 'If your group is voice-first, TeamSpeak is the fastest route from install to talking. It is a strong fit for gaming, raids, and live ops where low latency matters.',
-      cta: 'Download TeamSpeak',
-      href: 'https://www.teamspeak.com/en/downloads/',
-      secondaryCta: 'TeamSpeak getting started',
-      secondaryHref: 'https://www.teamspeak.com/en/support/get-started/',
-      note: 'Server address: ts3.ckconflux.com',
-    },
-  ];
+      <section id="signin" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-start">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200 sm:text-sm">Start here</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">Simple step-by-step onboarding</h2>
+            <ol className="mt-4 space-y-3">
+              {[
+                'Open Element Web and choose Create account.',
+                'Pick your username. This becomes your permanent MXID.',
+                'Set a strong passphrase and add your recovery email.',
+                'Complete CAPTCHA, verify email, and enter Element.',
+              ].map((step, i) => (
+                <li key={step} className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-slate-200">
+                  <span className="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-cyan-400/20 text-xs font-semibold text-cyan-200">{i + 1}</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <SignUpFlowCard />
+        </div>
+      </section>
 
-  const mxidComparison = [
-    {
-      label: 'MXID',
-      discord: 'Username lives inside Discord',
-      matrix: 'Your permanent Matrix identity is @user:ckconflux.com',
-    },
-    {
-      label: 'Display name',
-      discord: 'Nickname can vary by server',
-      matrix: 'Display name is what people usually see and can be changed later',
-    },
-    {
-      label: 'Communities',
-      discord: 'Servers contain channels',
-      matrix: 'Spaces contain rooms',
-    },
-    {
-      label: 'Voice and video',
-      discord: 'Separate voice channels',
-      matrix: 'Call rooms can live right inside your room flow',
-    },
-  ];
+      <section id="tools" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 sm:text-sm">Other community tools (optional)</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">Mastodon and TeamSpeak</h2>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 className="text-lg font-semibold text-white">Mastodon</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">Social posting companion to Matrix chats.</p>
+            <a href="https://masto.colonelkrud.com/auth/sign_up" className="mt-4 inline-flex rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white">Open Mastodon</a>
+          </article>
+          <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 className="text-lg font-semibold text-white">TeamSpeak</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">Voice-first low latency comms. Server: ts3.ckconflux.com.</p>
+            <a href="https://www.teamspeak.com/en/downloads/" className="mt-4 inline-flex rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white">Download TeamSpeak</a>
+          </article>
+        </div>
+      </section>
 
-  const spaceExamples = [
-    {
-      title: 'CK Conflux Community',
-      rooms: ['General Chat', 'Help', 'Tech News', 'Programmer Humor', 'Voice Chat', 'Science Sharing'],
-    },
-    {
-      title: '332 Gamers Community',
-      rooms: ['332 Gamers #General', 'Video Games', 'Factorio', '332 Gamers #Public'],
-    },
-    {
-      title: 'CK Admin Community',
-      rooms: ['General Chat', 'Git', 'Development', 'Moderators', 'Draupnir', 'Plex Requests'],
-    },
-  ];
+      <section className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200 sm:text-sm">Need help?</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">Read the full Help & FAQ center</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-300">Includes onboarding guidance, policy links, and beginner-friendly troubleshooting.</p>
+          <a href="/help" className="mt-4 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950">Open Help Center</a>
+        </div>
+      </section>
+    </>
+  );
+}
 
-  const publicRoomExamples = ['#draupnir:matrix.org', '#synapse:codestorm.net', '#matrix-on-kubernetes:fiksel.info'];
+function HelpPage() {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <header className="max-w-3xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200 sm:text-sm">Help center</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Matrix onboarding, FAQ, and support resources</h1>
+      </header>
 
-  const faqs = [
-    {
-      q: 'What should I use first?',
-      a: 'Start with Element Web at element.ckconflux.com. It is the default choice for chat, DMs, communities, voice, and video.',
-    },
-    {
-      q: 'What is MatrixRTC / Element Call?',
-      a: 'MatrixRTC is the real-time calling tech used in Matrix. In Element, this shows up as Element Call for room-based voice and video meetings.',
-    },
-    {
-      q: 'Does Element support screen sharing?',
-      a: 'Yes. Screen sharing is available in Element calls on supported platforms and browsers.',
-    },
-    {
-      q: 'Can I use different display names in different rooms?',
-      a: 'Usually you set one profile display name for your account, but some clients and room settings can show room-specific profile info. Your MXID stays the same either way.',
-    },
-    {
-      q: 'How do direct messages work in Element?',
-      a: 'Use the Start Chat / New Message option, pick a user, and Element creates a private DM room between you and that person.',
-    },
-    {
-      q: 'How do I invite friends with registration codes?',
-      a: 'Share a registration code from an existing member with your friend, then they use it during account creation on element.ckconflux.com.',
-    },
-    {
-      q: 'Can registration codes be revoked?',
-      a: 'Yes. Registration codes are access controls and can be revoked if abused, spammed, or shared in bad faith.',
-    },
-    {
-      q: 'How do I get a registration token?',
-      a: 'New Matrix accounts need a registration token. You can request one from an existing member, or get token access through any supported tier at buymeacoffee.com/conflux.',
-    },
-    {
-      q: 'Can I discover communities outside this server?',
-      a: 'Yes. Your ckconflux.com account can join public Matrix rooms and spaces hosted on other servers.',
-    },
-    {
-      q: 'Can I use another Matrix client besides Element?',
-      a: 'Yes. You are not locked to one app. Popular options include Element X (iOS/Android), Nheko (Windows/macOS/Linux), Element Web/Desktop (Web/Windows/macOS/Linux), FluffyChat (iOS/Android/Linux/Web), and Cinny (Web with desktop packaging available).',
-    },
-    {
-      q: 'What mobile apps can I use for Element?',
-      a: 'Element has official mobile apps for iOS and Android, and your same account can also be used in compatible Matrix clients.',
-    },
-    {
-      q: 'What mobile apps can I use for Mastodon?',
-      a: 'You can use the official Mastodon app on iOS and Android, or other compatible Mastodon apps if you prefer.',
-    },
-    {
-      q: 'Is there a mobile app for TeamSpeak?',
-      a: 'Yes. TeamSpeak offers mobile clients, and you can still use desktop clients for longer sessions.',
-    },
-    {
-      q: 'TeamSpeak 6 vs TeamSpeak 3: which should I use?',
-      a: 'Use whichever client works best for your setup. Both are common in the community, so choose based on stability and features you prefer.',
-    },
-    {
-      q: 'How do I report content in Mastodon?',
-      a: 'Open the post or account menu and use Report. Include context so moderators can review quickly.',
-    },
-    {
-      q: 'How do I report content in Element?',
-      a: 'Use the message or user actions menu in Element and choose Report. If needed, also contact server moderators with room links and timestamps.',
-    },
-    {
-      q: 'How do I report content in TeamSpeak?',
-      a: 'Report the issue to server admins or moderators with usernames, channel details, and time of incident.',
-    },
-    {
-      q: 'How do I ignore users in Element?',
-      a: 'Open the user profile and add them to your ignore list. This hides messages and reduces unwanted contact.',
-    },
-    {
-      q: 'How do I ignore users in Mastodon?',
-      a: 'Use Mute for a softer filter or Block for a stronger stop. Both options are available from a user profile menu.',
-    },
-    {
-      q: 'How do notification settings work in Element?',
-      a: 'You can tune notifications globally and per room, including mute, mentions-only, and custom alert rules.',
-    },
-    {
-      q: 'Do files stay forever?',
-      a: 'You can send images and files like Discord. If a file is accessed regularly, it stays available. If no one views it for over a year, it is automatically removed.',
-    },
-    {
-      q: 'How is moderation handled?',
-      a: 'Moderation is best effort. CK Conflux uses Draupnir for community moderation and participates in the Garden Fence blocklist ecosystem to reduce abuse, spam, and harmful content.',
-    },
+      <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="text-xl font-semibold text-white">Policies & Rules</h2>
+        <p className="mt-2 text-sm text-slate-300">For account obligations, moderation expectations, and data handling:</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a href="/terms" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Terms of Use</a>
+          <a href="/rules" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Server Rules</a>
+          <a href="/privacy" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Privacy Policy</a>
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="text-xl font-semibold text-white">Official docs and ecosystem links</h2>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300">
+          <li>Official Element FAQ: <a className="font-semibold text-cyan-200 underline" href="https://docs.element.io/latest/element-support/frequently-asked-questions/">docs.element.io</a></li>
+          <li>Matrix clients directory: <a className="font-semibold text-cyan-200 underline" href="https://matrix.org/ecosystem/clients/">matrix.org/ecosystem/clients</a></li>
+          <li>Room discovery: <a className="font-semibold text-cyan-200 underline" href="https://matrixrooms.info/">matrixrooms.info</a></li>
+          <li>Optional paid client with built-in bridges/integrations: <a className="font-semibold text-cyan-200 underline" href="https://www.beeper.com/">Beeper</a></li>
+        </ul>
+        <p className="mt-3 text-sm text-slate-300">Matrix is open-standard: you are not locked to one app. Recommended: Element X on mobile and element.ckconflux.com on web. Bridging is allowed on this server, and you can request additional bridges from admins.</p>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-2xl font-semibold text-white">FAQ</h2>
+        <div className="mt-4 space-y-3">
+          {faqItems.map((item, index) => (
+            <AccordionItem key={item.q} title={item.q} defaultOpen={index === 0}>
+              {item.a}
+            </AccordionItem>
+          ))}
+        </div>
+      </section>
+    </section>
+  );
+}
+
+function PrivacyPage() {
+  return (
+    <LegalLayout title="Privacy Policy" lastUpdated="Mar 16, 2025">
+      <p>
+        This Privacy Policy describes how masto.colonelkrud.com (&quot;masto.colonelkrud.com&quot;, &quot;we&quot;, &quot;us&quot;) collects, protects, and uses the personally identifiable information you may provide through the masto.colonelkrud.com website or its API. This policy also outlines your rights and choices regarding your personal data.
+      </p>
+      <p>This policy applies to all users accessing the service from the United States. It does not apply to third-party services we do not control.</p>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">1. Information We Collect</h2>
+        <h3 className="mt-3 text-lg font-semibold text-white">Basic Account Information</h3>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Username</li>
+          <li>Email address</li>
+          <li>Password (hashed and not stored in plain text)</li>
+          <li>Additional optional profile information (display name, biography, profile picture, header image)</li>
+        </ul>
+        <p className="mt-2">Your username, display name, biography, and profile picture are always public.</p>
+
+        <h3 className="mt-3 text-lg font-semibold text-white">Public Content</h3>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Your posts (text, media attachments)</li>
+          <li>Lists of followers and people you follow</li>
+          <li>The date, time, and client application used to submit messages</li>
+        </ul>
+        <p className="mt-2">Public and unlisted posts are publicly accessible. Featured posts are also visible to the public.</p>
+
+        <h3 className="mt-3 text-lg font-semibold text-white">Private &amp; Restricted Content</h3>
+        <p className="mt-2">Followers-only posts are shared with your followers and mentioned users. Direct messages are sent only to mentioned users.</p>
+        <p className="mt-2">Important: Due to the decentralized nature of the platform, some posts may be stored on other servers. Other server operators and users may have access to your posts, screenshots, or logs.</p>
+
+        <h3 className="mt-3 text-lg font-semibold text-white">Metadata &amp; Logging</h3>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Your IP address upon login (stored for up to 12 months)</li>
+          <li>User-agent (browser application details)</li>
+          <li>Server logs (IP addresses of requests retained for up to 90 days)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">2. How We Use Your Information</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Provide core functionality, such as message delivery and user interactions</li>
+          <li>Maintain security and prevent abuse (e.g., ban evasion detection)</li>
+          <li>Send account-related notifications and respond to inquiries</li>
+        </ul>
+        <p className="mt-2">We never sell or trade your personal data.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">3. How We Protect Your Data</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Encryption: All traffic is secured with SSL/TLS.</li>
+          <li>Password Protection: Passwords are hashed using a secure one-way algorithm.</li>
+          <li>Two-Factor Authentication: Available for additional account security.</li>
+        </ul>
+        <p className="mt-2">In case of a data breach, we will notify affected users as required by law.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">4. Data Retention Policy</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Server logs containing IP addresses are retained for up to 90 days.</li>
+          <li>Registered users&apos; latest IP addresses are stored for up to 12 months.</li>
+          <li>You can request an archive of your data, including posts and media.</li>
+          <li>You may permanently delete your account at any time.</li>
+        </ul>
+        <p className="mt-2">Once deleted, your account cannot be restored. Some content shared with other servers may persist.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">5. Use of Cookies</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Recognize logged-in sessions</li>
+          <li>Save user preferences for future visits</li>
+        </ul>
+        <p className="mt-2">You can disable cookies in your browser settings, but some features may not function properly.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">6. Sharing of Data</h2>
+        <p>We do not sell or share personally identifiable information except in the following cases:</p>
+        <ul className="mt-2 list-disc pl-5">
+          <li>With trusted third-party service providers who assist in maintaining and securing the platform (under strict confidentiality agreements)</li>
+          <li>When required to comply with legal obligations (court orders, law enforcement requests)</li>
+          <li>To protect the rights, property, or safety of masto.colonelkrud.com, its users, or the public</li>
+        </ul>
+        <p className="mt-2">Public posts and some user interactions (such as follows and favorites) may be shared with other servers as part of the decentralized network.</p>
+        <h3 className="mt-3 text-lg font-semibold text-white">Third-Party Applications</h3>
+        <p className="mt-2">When you authorize an application to use your account, it may access your public profile information, follower/following lists, posts, and favorites. Applications cannot access your email address or password.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">7. Children&apos;s Privacy</h2>
+        <p>Per COPPA (Children&apos;s Online Privacy Protection Act), this service is not intended for users under 18 years old. If you are under 18, do not use this service.</p>
+        <p className="mt-2">If we learn that a user under 18 has provided personal information, we will take immediate steps to delete their account and data.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">8. Your Rights &amp; Choices</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Access &amp; Download Your Data: Request a copy of your stored information.</li>
+          <li>Correct Your Information: Edit your profile at any time.</li>
+          <li>Delete Your Account: Remove all associated data permanently.</li>
+        </ul>
+        <p className="mt-2">For inquiries regarding data access or deletion, contact admin@colonelkrud.com.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">9. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy periodically. Any significant changes will be communicated via email or platform announcements.</p>
+        <p className="mt-2">Your continued use of masto.colonelkrud.com constitutes acceptance of the revised policy.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">10. Contact Information</h2>
+        <p>Email: admin@colonelkrud.com</p>
+        <p>Website: masto.colonelkrud.com</p>
+      </section>
+    </LegalLayout>
+  );
+}
+
+function TermsPage() {
+  return (
+    <LegalLayout title="CK Conflux Terms of Use" lastUpdated="April 16, 2026">
+      <p>By accessing CK Conflux services—including Element at element.ckconflux.com, Matrix homeserver services at ckconflux.com (Synapse), Mastodon at masto.colonelkrud.com, and related community services—you explicitly agree to these Terms and our legal policies. We may modify these terms at any time and may suspend or discontinue services at our discretion without prior notice.</p>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">User Eligibility &amp; Responsibilities</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Users must be at least 18 years old. Accounts violating this requirement will be terminated immediately.</li>
+          <li>You must maintain confidentiality and security of login credentials and notify us immediately of unauthorized access.</li>
+          <li>Content provided is informational only; seek professional advice for important decisions.</li>
+          <li>You are responsible for your actions and contributions on CK Conflux.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Prohibited Uses</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Illegal, fraudulent, or deceptive practices.</li>
+          <li>Child exploitation or harming minors in any way.</li>
+          <li>Bullying, harassment, hate speech, discrimination, or intimidation.</li>
+          <li>Distributing spam, unsolicited promotions, or advertisements.</li>
+          <li>Uploading malware, viruses, or harmful software.</li>
+          <li>Unauthorized system or network access, disruption, or attacks.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Interactive Services Disclaimer</h2>
+        <p>CK Conflux provides interactive features like chats and forums. We do not actively moderate all user content and expressly disclaim responsibility for user-generated content. Moderation efforts in public or federated rooms are best-effort and not guaranteed.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Content Standards for User Contributions (Acceptable Use Policy)</h2>
+        <p>You may not contribute content that includes:</p>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Illegal activities or promotion of harmful actions toward others.</li>
+          <li>Intellectual property infringement or unauthorized proprietary content.</li>
+          <li>Defamatory, abusive, hateful, violent, obscene, or invasive of privacy.</li>
+          <li>Malicious content intended to damage systems, software, or networks.</li>
+          <li>Unauthorized attempts to probe, scan, or breach security measures of our platform or cloud infrastructure.</li>
+          <li>Forging headers, identities, or misleading metadata.</li>
+          <li>Actions designed to overload or disrupt our services or provider infrastructure.</li>
+          <li>Circumvention of storage or usage restrictions.</li>
+          <li>Spam or unsolicited promotional content.</li>
+        </ul>
+        <p className="mt-2">CK Conflux enforces a zero-tolerance policy toward violations of these content standards.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Reporting Abuse and GDPR Requests</h2>
+        <p>Report inappropriate content or GDPR requests via built-in reporting methods, by mentioning moderation bot @draupnir:ckconflux.com, or by emailing abuse@mg.colonelkrud.com.</p>
+        <p className="mt-2">Content is typically reviewed and purged within 24 hours of reporting. GDPR data requests are delivered via your registered email. If your account is deleted before a GDPR request is fulfilled, your content may already have been permanently removed.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">User Privacy and Data Handling Practices</h2>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Expect no privacy in public rooms; communications there are publicly accessible.</li>
+          <li>Logs including IP addresses are retained for 30 days for performance, troubleshooting, and security.</li>
+          <li>Private messages and calls use end-to-end encryption (e2ee) by default where supported.</li>
+          <li>We use industry-standard encryption and security practices to protect user data.</li>
+          <li>We comply with GDPR data removal requests upon written request.</li>
+          <li>We comply fully with lawful law enforcement requests.</li>
+          <li>Data retention is best-effort; no explicit guarantees are provided.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Third-Party and Federated Content</h2>
+        <p>CK Conflux participates in Matrix federation, enabling interaction with third-party servers beyond our direct control. Federated content is the responsibility of originating servers, and CK Conflux disclaims liability for those interactions.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Suspension and Termination</h2>
+        <p>CK Conflux may suspend or terminate accounts at its sole discretion without notice for violations of these Terms, abuse, legal noncompliance, or lawful requests. We enforce zero tolerance for severe or repeated content-standard violations.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Indemnification</h2>
+        <p>You agree to indemnify and hold harmless CK Conflux and its operators from claims arising from:</p>
+        <ul className="mt-2 list-disc pl-5">
+          <li>Your violation of these Terms or applicable laws.</li>
+          <li>Your misuse of CK Conflux services or related infrastructure.</li>
+          <li>Unauthorized access or security breaches.</li>
+          <li>Defamatory, illegal, or harmful content posted by you.</li>
+          <li>Violations of provider acceptable use and security requirements.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">User Privacy and Expectations in Public Rooms</h2>
+        <p>Public rooms are publicly visible and messages should not be considered private. Exercise caution when sharing personal information.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">No Guarantee of Uptime or Service Levels</h2>
+        <p>CK Conflux services are provided without explicit or implicit uptime or performance guarantees. For transparency on disruptions and outages, see status.colonelkrud.com.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold text-white">Governing Law and Dispute Resolution</h2>
+        <p>These Terms are governed by laws of the United States and the Commonwealth of Virginia. Disputes will be resolved exclusively in courts located in Ashburn, Virginia. If any provision is invalid or unenforceable, the remaining provisions remain in full force and effect, and any invalidity applies only to the specific unenforceable circumstances.</p>
+      </section>
+
+      <p>Notice: You have already consented to the CK Conflux Terms of Use.</p>
+    </LegalLayout>
+  );
+}
+
+function RulesPage() {
+  const rules = [
+    ['Maintain Privacy', 'Do not share personal information of others without their explicit consent. This includes photos, real names, and contact details.'],
+    ['No Impersonation', 'Impersonating other users, celebrities, or public figures is strictly prohibited. Be yourself and respect everyone’s identity.'],
+    ['Keep Content Appropriate', 'Post content suitable for all audiences. Avoid explicit, graphic, or violent content unless clearly marked and compliant with guidelines.'],
+    ['Respect Copyrights', 'Do not post or share copyrighted material without permission from the copyright holder.'],
+    ['No Hate Speech', 'Speech that promotes or incites harm against protected groups is forbidden and will result in a ban.'],
+    ['Respect Everyone’s Time', 'Do not tag or mention users excessively and unnecessarily. Be considerate of notifications and online space.'],
+    ['Constructive Conversations', 'Engage in constructive discussions. Avoid propagating fake news or misinformation.'],
+    ['No Advertisements or Spam', 'Commercial ads are not allowed without prior staff approval, including unsolicited promotions or repetitive messages.'],
+    ['Accountability for Content', 'You are responsible for the content you publish. Inappropriate content may be removed and can lead to suspension.'],
+    ['Follow Platform Updates', 'Stay informed about updates to community rules and features. Compliance with new rules is expected.'],
+    ['Maximum File Size Limit', 'All uploads (images, videos, documents) must not exceed 100MB per file to support server operation and accessibility.'],
+    ['CSAM Scanning Enforcement', 'All uploaded content is scanned for CSAM using Cloudflare. Identified CSAM triggers immediate termination and legal reporting.'],
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/85 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <a href="#top" className="text-lg font-semibold tracking-tight text-white">
-            CK Conflux
-          </a>
-          <nav className="hidden items-center gap-6 text-sm text-slate-300 md:flex">
-            <a href="#why" className="transition hover:text-white">
-              Why switch
-            </a>
-            <a href="#spaces" className="transition hover:text-white">
-              Spaces & rooms
-            </a>
-            <a href="#signin" className="transition hover:text-white">
-              How to sign in
-            </a>
-            <a href="#services" className="transition hover:text-white">
-              Services
-            </a>
-            <a href="#faq" className="transition hover:text-white">
-              FAQ
-            </a>
+    <LegalLayout title="Server Rules" lastUpdated="April 16, 2026">
+      <p>These rules apply across CK Conflux community services and are enforced alongside our Terms of Use.</p>
+      <div className="grid gap-3">
+        {rules.map(([title, body], index) => (
+          <article key={title} className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <h2 className="text-lg font-semibold text-white">{index + 1}. {title}</h2>
+            <p className="mt-2 text-slate-300">{body}</p>
+          </article>
+        ))}
+      </div>
+    </LegalLayout>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-white/10 bg-slate-950/70">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-6 text-sm text-slate-400 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <span>CK Conflux community platform</span>
+        <div className="flex flex-wrap gap-3">
+          <a href="/help" className="hover:text-white">Help</a>
+          <a href="/terms" className="hover:text-white">Terms of Use</a>
+          <a href="/privacy" className="hover:text-white">Privacy Policy</a>
+          <a href="/rules" className="hover:text-white">Server Rules</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+void SignUpFlowCard;
+void HomePage;
+void HelpPage;
+void PrivacyPage;
+void TermsPage;
+void RulesPage;
+void Footer;
+void LegalLayout;
+
+export default function CkConfluxLandingPage() {
+  const pathname = usePathname();
+
+  const pageMap = {
+    '/help': <HelpPage />,
+    '/privacy': <PrivacyPage />,
+    '/terms': <TermsPage />,
+    '/rules': <RulesPage />,
+  };
+
+  const content = pageMap[pathname] ?? <HomePage />;
+
+  return (
+    <div className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <a href="/" className="text-base font-semibold tracking-tight text-white sm:text-lg">CK Conflux</a>
+          <nav className="hidden items-center gap-5 text-sm text-slate-300 md:flex">
+            <a href="/" className="transition hover:text-white">Home</a>
+            <a href="/help" className="transition hover:text-white">Help</a>
+            <a href="/terms" className="transition hover:text-white">Terms</a>
+            <a href="/privacy" className="transition hover:text-white">Privacy</a>
+            <a href="/rules" className="transition hover:text-white">Rules</a>
           </nav>
-          <a
-            href="https://element.ckconflux.com"
-            className="rounded-2xl bg-cyan-400 px-4 py-2 text-sm font-medium text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5"
-          >
-            Open Element
-          </a>
+          <a href="https://element.ckconflux.com" className="rounded-xl bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:-translate-y-0.5 sm:px-4">Open Element</a>
         </div>
       </header>
-
-      <main id="top">
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_25%)]" />
-          <div className="relative mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-28">
-            <div className="max-w-3xl">
-              <div className="mb-6 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-200">
-                Community-run chat, social, and voice
-              </div>
-              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                A safer, more private community home for people who are tired of Discord lock-in.
-              </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-                CK Conflux brings together <span className="font-semibold text-white">Element chat on Matrix</span>,{' '}
-                <span className="font-semibold text-white">Mastodon social networking</span>, and <span className="font-semibold text-white">TeamSpeak voice</span>. It is built for people who want familiar community tools with more privacy, more ownership, and less dependence on a single company.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href="https://element.ckconflux.com" className="rounded-2xl bg-cyan-400 px-6 py-3 text-base font-semibold text-slate-950 shadow-xl shadow-cyan-500/20 transition hover:-translate-y-0.5">
-                  Start with Element
-                </a>
-                <a href="#signin" className="rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10">
-                  See the sign-up steps
-                </a>
-              </div>
-              <p className="mt-3 text-sm text-slate-400">No ads. Community-run since 2015.</p>
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-sm text-slate-400">Chat identity</div>
-                  <div className="mt-1 font-medium text-white">@user:ckconflux.com</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-sm text-slate-400">Social network</div>
-                  <div className="mt-1 font-medium text-white">masto.colonelkrud.com</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-sm text-slate-400">Voice server</div>
-                  <div className="mt-1 font-medium text-white">ts3.ckconflux.com</div>
-                </div>
-              </div>
-            </div>
-
-            <div />
-          </div>
-        </section>
-
-        <section id="why" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Why switch</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">What is Element and Matrix, and why should you care?</h2>
-            <p className="mt-4 text-lg leading-8 text-slate-300">Element is the app. Matrix is the open communication network that powers it. Together, they give you modern chat and calling with more privacy, better portability, and a community that is not owned by a single platform.</p>
-          </div>
-            <div className="mt-10 grid gap-6 lg:grid-cols-3">
-              {matrixFeatures.map((feature) => (
-                <div key={feature.title} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20">
-                  <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
-                  <p className="mt-3 leading-7 text-slate-300">{feature.body}</p>
-                </div>
-              ))}
-            </div>
-        </section>
-
-        <section className="border-y border-white/10 bg-white/[0.03]">
-          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How it compares</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Familiar like Discord, different where it matters</h2>
-            </div>
-            <div className="mt-10 grid gap-6 lg:grid-cols-3">
-              {onboardingSteps.map((step) => (
-                <div key={step.title} className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-6">
-                  <h3 className="text-xl font-semibold text-white">{step.title}</h3>
-                  <p className="mt-3 leading-7 text-slate-300">{step.body}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-10 grid gap-4 lg:grid-cols-4">
-              {mxidComparison.map((item) => (
-                <div key={item.label} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
-                  <div className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">{item.label}</div>
-                  <div className="mt-4 text-sm font-medium text-slate-400">Discord</div>
-                  <p className="mt-1 text-sm leading-6 text-slate-300">{item.discord}</p>
-                  <div className="mt-4 text-sm font-medium text-slate-400">Matrix</div>
-                  <p className="mt-1 text-sm leading-6 text-white">{item.matrix}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="signin" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How to sign in</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Getting started should feel simple, not confusing.</h2>
-              <p className="mt-4 text-lg leading-8 text-slate-300">We guide you through creating your account step by step so you can see exactly what to expect before you begin.</p>
-              <div className="mt-8 space-y-4">
-                {[
-                  'Choose a username first. It becomes your permanent Matrix ID (MXID).',
-                  'Use a long passphrase for a strong-but-usable password score.',
-                  'Add your email for verification and account recovery.',
-                  'Complete the CAPTCHA to reduce bots and spam.',
-                  'Verify your email, then continue into Element Web.',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <span className="mt-0.5 h-5 w-5 flex-none text-cyan-200">•</span>
-                    <p className="text-slate-300">{item}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
-                New Matrix accounts require a registration token. Existing members can share one, and every supported tier on{' '}
-                <a href="https://buymeacoffee.com/conflux" className="font-semibold underline decoration-amber-200/70 underline-offset-2">
-                  Buy Me a Coffee
-                </a>{' '}
-                includes registration-token access.
-              </div>
-            </div>
-            <SignUpFlowCard />
-          </div>
-        </section>
-
-        <section id="spaces" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Spaces, rooms, and calls</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Learn Matrix with Discord terms first</h2>
-            <p className="mt-4 text-lg leading-8 text-slate-300">A <span className="font-semibold text-white">space</span> is like a Discord server. A <span className="font-semibold text-white">room</span> is like a channel. A <span className="font-semibold text-white">call room</span> gives you voice and video directly inside the room flow, so joining a conversation feels more natural.</p>
-          </div>
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
-              <h3 className="mt-5 text-xl font-semibold text-white">Spaces = servers</h3>
-              <p className="mt-3 leading-7 text-slate-300">Spaces group related rooms together so your community feels organized. They work like Discord servers, but can also point to rooms that live elsewhere on Matrix.</p>
-            </div>
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
-              <h3 className="mt-5 text-xl font-semibold text-white">Rooms = channels</h3>
-              <p className="mt-3 leading-7 text-slate-300">Rooms can be public or private. They can be used for general chat, announcements, help, media sharing, support, or topic-specific discussion.</p>
-            </div>
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
-              <h3 className="mt-5 text-xl font-semibold text-white">Call rooms = voice and video</h3>
-              <p className="mt-3 leading-7 text-slate-300">Element supports voice, video, and screen sharing. Instead of treating calls as a separate world, Matrix can attach the call experience right to the room your group already uses.</p>
-            </div>
-          </div>
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {spaceExamples.map((space) => (
-              <div key={space.title} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20">
-                <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Space</div>
-                <h3 className="mt-3 text-xl font-semibold text-white">{space.title}</h3>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {space.rooms.map((room) => (
-                    <span key={room} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm text-slate-300">
-                      {room}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-6">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Discovery</div>
-              <h3 className="mt-3 text-2xl font-semibold text-white">Find rooms and communities beyond one server</h3>
-              <p className="mt-3 leading-7 text-slate-300">This is one of Matrix’s biggest differences from Discord. Your ckconflux.com account can still join public rooms and communities hosted on other Matrix servers.</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {publicRoomExamples.map((room) => (
-                  <span key={room} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm text-slate-300">{room}</span>
-                ))}
-              </div>
-              <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-400">
-                <p>
-                  Browse public rooms with{' '}
-                  <a href="https://matrixrooms.info/" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
-                    matrixrooms.info
-                  </a>
-                  , then join what fits your interests.
-                </p>
-                <p>Create your own room, choose public or private visibility, and organize rooms into spaces just like channels under a server.</p>
-                <p>
-                  Try this room first:{' '}
-                  <a href="https://matrix.to/#/%23draupnir:matrix.org" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
-                    #draupnir:matrix.org
-                  </a>
-                </p>
-              </div>
-            </div>
-            <div />
-          </div>
-        </section>
-
-        <section id="services" className="border-y border-white/10 bg-white/[0.03]">
-          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Get started by service</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Choose the tool that matches how you want to connect</h2>
-            </div>
-            <div className="mt-10 grid gap-6 lg:grid-cols-3">
-              {learnSections.map((section) => (
-                <div
-                  key={section.title}
-                  className="group block rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/[0.07]"
-                >
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">{section.label}</div>
-                  <h3 className="text-xl font-semibold text-white">{section.title}</h3>
-                  <p className="mt-3 leading-7 text-slate-300">{section.body}</p>
-                  {section.note && <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">{section.note}</div>}
-                  <div className="mt-5 space-y-2 text-sm text-cyan-200">
-                    <a href={section.href} className="block font-medium">
-                      {section.cta}
-                    </a>
-                    {section.secondaryCta && section.secondaryHref && (
-                      <a href={section.secondaryHref} className="block">
-                        {section.secondaryCta}
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="faq" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">FAQ</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Common questions from new users</h2>
-          </div>
-          <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            {faqs.map((faq) => (
-              <div key={faq.q} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-                <h3 className="text-lg font-semibold text-white">{faq.q}</h3>
-                <p className="mt-3 leading-7 text-slate-300">{faq.a}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-6 pb-20 lg:px-8">
-          <div className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 via-slate-900 to-purple-500/10 p-8 shadow-2xl shadow-cyan-950/30">
-            <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Community supported</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Independently run and transparent</h2>
-                <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">This community is independently run and costs about $700 per month to operate.</p>
-                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">It’s a passion project maintained by Colonelkrud since 2015.</p>
-                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">We focus on reliability and transparency:</p>
-                <ul className="mt-3 list-disc space-y-2 pl-6 text-lg leading-8 text-slate-300">
-                  <li>
-                    99.999%{' '}
-                    <a href="https://status.colonelkrud.com" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
-                      uptime
-                    </a>{' '}
-                    over the past year
-                  </li>
-                  <li>Mean time between failures: 121.67 days</li>
-                </ul>
-                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">
-                  Check the{' '}
-                  <a href="https://status.colonelkrud.com" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
-                    status page
-                  </a>{' '}
-                  for live uptime, maintenance updates, and incident history.
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3 text-sm text-cyan-200">
-                  <a href="#" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Download ToS</a>
-                  <a href="#" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Download Privacy Policy</a>
-                  <a href="#" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Download Security Policy</a>
-                </div>
-              </div>
-              <div className="flex flex-col gap-3">
-                <a href="https://element.ckconflux.com" className="rounded-2xl bg-cyan-400 px-6 py-3 text-center text-base font-semibold text-slate-950 transition hover:-translate-y-0.5">Join with Element</a>
-                <a href="https://buymeacoffee.com/conflux" className="rounded-2xl bg-amber-300 px-6 py-3 text-center text-base font-semibold text-slate-950 transition hover:-translate-y-0.5">
-                  <span className="inline-flex items-center gap-2">Support us</span>
-                </a>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm leading-6 text-slate-300">Also available: social posting on <span className="font-medium text-white">masto.colonelkrud.com</span> and voice chat on <span className="font-medium text-white">ts3.ckconflux.com</span>.</div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+      <main id="top">{content}</main>
+      <Footer />
     </div>
   );
 }
