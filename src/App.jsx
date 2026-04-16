@@ -234,7 +234,7 @@ export default function CkConfluxLandingPage() {
       title: 'Join Mastodon for social updates',
       body: 'Mastodon is a federated social network, similar to Twitter or Bluesky in day-to-day use, but community-run. Register on masto.colonelkrud.com to follow updates, discover people, and join conversations beyond chat rooms.',
       cta: 'Register for Mastodon',
-      href: 'https://masto.colonelkrud.com',
+      href: 'https://masto.colonelkrud.com/auth/sign_up',
     },
     {
       title: 'Use TeamSpeak for voice-first sessions',
@@ -544,7 +544,7 @@ export default function CkConfluxLandingPage() {
               <p className="mt-3 leading-7 text-slate-300">Best for public posting, following updates, and lightweight social discovery. It is a federated social network, which means you can follow people across many servers while keeping your home account here.</p>
               <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">New accounts require manual approval.</div>
               <div className="mt-5 space-y-2 text-sm text-cyan-200">
-                <a href="https://masto.colonelkrud.com" className="block">Register on Mastodon</a>
+                <a href="https://masto.colonelkrud.com/auth/sign_up" className="block">Register on Mastodon</a>
                 <a href="https://docs.joinmastodon.org/user/" className="block">Mastodon user guide</a>
               </div>
             </div>
