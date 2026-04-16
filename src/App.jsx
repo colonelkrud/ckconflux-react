@@ -318,6 +318,14 @@ export default function CkConfluxLandingPage() {
       a: 'Install the TeamSpeak client, open it, choose to connect to a server, and enter ts3.ckconflux.com as the server address.',
     },
     {
+      q: 'How do I find and join rooms?',
+      a: 'You can browse public rooms using https://matrixrooms.info/, a directory that lets you search communities by topic or interest. There are thousands of rooms across many servers. You can join existing communities or create your own with friends. Some large rooms require approval to join. If a room has more than 1,000 members, you may receive a direct message with instructions after requesting access.',
+    },
+    {
+      q: 'Do files stay forever?',
+      a: 'You can send images and files just like Discord. If a file is accessed regularly, it stays available. If no one views it for over a year, it is automatically removed. We used to store files forever, but storage costs became too high to sustain long term.',
+    },
+    {
       q: 'How is moderation handled?',
       a: 'Moderation is best effort and community driven. We work to keep the space healthy, but this is not a giant corporate platform with a massive trust and safety department.',
     },
@@ -491,8 +499,8 @@ export default function CkConfluxLandingPage() {
           <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={stagger}>
               <motion.p variants={fadeUp} className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How to sign in</motion.p>
-              <motion.h2 variants={fadeUp} className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Clear, friendly onboarding beats technical jargon</motion.h2>
-              <motion.p variants={fadeUp} className="mt-4 text-lg leading-8 text-slate-300">We modeled this section after the Matrix account registration flow: username, email address, password, confirm password, terms, and CAPTCHA before you continue. Instead of dumping raw form fields on people, this page explains why each step matters.</motion.p>
+              <motion.h2 variants={fadeUp} className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Getting started should feel simple, not confusing.</motion.h2>
+              <motion.p variants={fadeUp} className="mt-4 text-lg leading-8 text-slate-300">We guide you through creating your account step by step — username, email, password, and a quick verification. Each step is explained clearly so you know exactly what’s happening and why.</motion.p>
               <motion.div variants={stagger} className="mt-8 space-y-4">
                 {[
                   'Pick a username. This becomes your permanent Matrix ID, also called your MXID.',
@@ -581,8 +589,16 @@ export default function CkConfluxLandingPage() {
             <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Community supported</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Community-run, privacy-minded, and built to last</h2>
-                <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">Moderation is best effort. Terms of Service, Privacy Policy, and Security Policy links can live here as downloadable documents. If you want to help keep the project running, you can support it directly.</p>
+                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Independently run and transparent</h2>
+                <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">This community is independently run and costs about $700 per month to operate.</p>
+                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">It’s a passion project maintained by Colonelkrud since 2015.</p>
+                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">We focus on reliability and transparency:</p>
+                <ul className="mt-3 list-disc space-y-2 pl-6 text-lg leading-8 text-slate-300">
+                  <li>99.999% uptime over the past year</li>
+                  <li>3 incidents totaling 3 minutes and 14 seconds</li>
+                  <li>Mean time between failures: 121.67 days</li>
+                </ul>
+                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">You can view uptime, maintenance, and incidents at https://status.colonelkrud.com</p>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm text-cyan-200">
                   <a href="#" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Download ToS</a>
                   <a href="#" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Download Privacy Policy</a>
