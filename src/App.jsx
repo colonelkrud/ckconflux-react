@@ -1,3 +1,155 @@
+import { useEffect, useRef, useState } from 'react';
+
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (event) => setPrefersReducedMotion(event.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
+const signUpFields = [
+  { key: 'username', label: 'Choose a username', value: '@yourname:ckconflux.com', helper: 'This becomes your permanent Matrix ID, also called your MXID. Your display name can change later, but your MXID does not.' },
+  { key: 'password', label: 'Create a safe password', value: 'correct-horse-battery-lantern', helper: 'Use a long passphrase that is easy for you to remember. We require a strong-but-usable password score.' },
+  { key: 'email', label: 'Add your email', value: '[email protected]', helper: 'Used for verification and account recovery.' },
+];
+
+export function SignUpFlowCard() {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const cardRef = useRef(null);
+  const [hasEnteredView, setHasEnteredView] = useState(false);
+  const [visibleFields, setVisibleFields] = useState(0);
+  const [typedValues, setTypedValues] = useState({ username: '', password: '', email: '' });
+  const [captchaChecked, setCaptchaChecked] = useState(false);
+
+  useEffect(() => {
+    if (!cardRef.current || hasEnteredView) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasEnteredView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [hasEnteredView]);
+
+  useEffect(() => {
+    if (!hasEnteredView) {
+      return undefined;
+    }
+
+    if (prefersReducedMotion) {
+      setVisibleFields(signUpFields.length + 1);
+      setTypedValues({
+        username: signUpFields[0].value,
+        password: signUpFields[1].value,
+        email: signUpFields[2].value,
+      });
+      setCaptchaChecked(true);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timers = [];
+
+    const wait = (ms) =>
+      new Promise((resolve) => {
+        const id = setTimeout(resolve, ms);
+        timers.push(id);
+      });
+
+    const runSequence = async () => {
+      await wait(350);
+      for (let i = 0; i < signUpFields.length; i += 1) {
+        const field = signUpFields[i];
+        setVisibleFields(i + 1);
+        await wait(250);
+        for (let charIndex = 1; charIndex <= field.value.length; charIndex += 1) {
+          if (cancelled) {
+            return;
+          }
+          const partialValue = field.value.slice(0, charIndex);
+          setTypedValues((prev) => ({ ...prev, [field.key]: partialValue }));
+          await wait(38);
+        }
+        await wait(700);
+      }
+
+      setVisibleFields(signUpFields.length + 1);
+      await wait(900);
+      setCaptchaChecked(true);
+    };
+
+    runSequence();
+
+    return () => {
+      cancelled = true;
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [hasEnteredView, prefersReducedMotion]);
+
+  return (
+    <div ref={cardRef} className="rounded-[1.8rem] border border-cyan-300/20 bg-slate-900/90 p-6 shadow-2xl shadow-cyan-950/30">
+      <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Simple, secure sign up</div>
+      <h3 className="mt-3 text-2xl font-semibold text-white">matrix auth</h3>
+      <div className="mt-6 space-y-4">
+        {signUpFields.map((field, index) => {
+          const isVisible = visibleFields > index;
+          const value = typedValues[field.key];
+          return (
+            <div key={field.key} className={`rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="text-sm font-medium text-slate-300">{field.label}</div>
+              <div className="mt-2 flex h-11 items-center rounded-xl border border-white/10 bg-slate-950 px-3 font-mono text-sm text-slate-100">
+                {value}
+                {isVisible && value.length < field.value.length && <span className="ml-0.5 inline-block h-4 w-px animate-pulse bg-cyan-200" />}
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{field.helper}</p>
+            </div>
+          );
+        })}
+
+        <div className={`rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition duration-500 ${visibleFields > signUpFields.length ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="text-sm font-medium text-slate-300">Complete CAPTCHA</div>
+          <div className="mt-2 rounded-xl border border-white/15 bg-slate-950/90 p-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-6 w-6 items-center justify-center rounded border text-sm transition ${captchaChecked ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300' : 'border-slate-500 bg-slate-800 text-transparent'}`}>
+                  ✓
+                </div>
+                <span className="text-sm text-slate-100">I am human</span>
+              </div>
+              <div className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-400">CAPTCHA</div>
+            </div>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-400">This helps keep bots and spam out.</p>
+        </div>
+      </div>
+      <p className="mt-5 text-sm leading-6 text-slate-300">After that, verify your email and continue into Element Web.</p>
+      <a
+        href="https://buymeacoffee.com/conflux"
+        className="mt-4 inline-flex rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5"
+      >
+        Get a registration token
+      </a>
+    </div>
+  );
+}
+
 export default function CkConfluxLandingPage() {
   const matrixFeatures = [
     {
@@ -124,8 +276,8 @@ export default function CkConfluxLandingPage() {
       a: 'Install the TeamSpeak client, open it, choose to connect to a server, and enter ts3.ckconflux.com as the server address.',
     },
     {
-      q: 'How do I find and join rooms?',
-      a: 'You can browse public rooms using https://matrixrooms.info/, a directory that lets you search communities by topic or interest. There are thousands of rooms across many servers. You can join existing communities or create your own with friends. Some large rooms require approval to join. If a room has more than 1,000 members, you may receive a direct message with instructions after requesting access.',
+      q: 'How do I get a registration token?',
+      a: 'New Matrix accounts need a registration token. You can request one from an existing member, or get token access through any supported tier at buymeacoffee.com/conflux.',
     },
     {
       q: 'Do files stay forever?',
@@ -133,7 +285,7 @@ export default function CkConfluxLandingPage() {
     },
     {
       q: 'How is moderation handled?',
-      a: 'Moderation is best effort and community driven. We work to keep the space healthy, but this is not a giant corporate platform with a massive trust and safety department.',
+      a: 'Moderation is best effort. CK Conflux uses Draupnir for community moderation, which is part of the Matrix moderation ecosystem and helps with coordinated, shared protections across rooms and communities. We also participate in the Mastodon Garden Fence Project blocklist ecosystem. The goal is to reduce abuse, spam, and harmful content, but moderation is never perfect.',
     },
   ];
 
@@ -193,6 +345,7 @@ export default function CkConfluxLandingPage() {
                   See the sign-up steps
                 </a>
               </div>
+              <p className="mt-3 text-sm text-slate-400">No ads. Community-run since 2015.</p>
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <div className="text-sm text-slate-400">Chat identity</div>
@@ -257,6 +410,38 @@ export default function CkConfluxLandingPage() {
           </div>
         </section>
 
+        <section id="signin" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How to sign in</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Getting started should feel simple, not confusing.</h2>
+              <p className="mt-4 text-lg leading-8 text-slate-300">We guide you through creating your account step by step so you can see exactly what to expect before you begin.</p>
+              <div className="mt-8 space-y-4">
+                {[
+                  'Choose a username first. It becomes your permanent Matrix ID (MXID).',
+                  'Use a long passphrase for a strong-but-usable password score.',
+                  'Add your email for verification and account recovery.',
+                  'Complete the CAPTCHA to reduce bots and spam.',
+                  'Verify your email, then continue into Element Web.',
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <span className="mt-0.5 h-5 w-5 flex-none text-cyan-200">•</span>
+                    <p className="text-slate-300">{item}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
+                New Matrix accounts require a registration token. Existing members can share one, and every supported tier on{' '}
+                <a href="https://buymeacoffee.com/conflux" className="font-semibold underline decoration-amber-200/70 underline-offset-2">
+                  Buy Me a Coffee
+                </a>{' '}
+                includes registration-token access.
+              </div>
+            </div>
+            <SignUpFlowCard />
+          </div>
+        </section>
+
         <section id="spaces" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Spaces, rooms, and calls</p>
@@ -302,37 +487,27 @@ export default function CkConfluxLandingPage() {
             <div className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-6">
               <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Discovery</div>
               <h3 className="mt-3 text-2xl font-semibold text-white">Find rooms and communities beyond one server</h3>
-              <p className="mt-3 leading-7 text-slate-300">This is one of Matrix’s biggest differences from Discord. Your account can live on ckconflux.com while you still browse and join public rooms from other servers.</p>
+              <p className="mt-3 leading-7 text-slate-300">This is one of Matrix’s biggest differences from Discord. Your ckconflux.com account can still join public rooms and communities hosted on other Matrix servers.</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {publicRoomExamples.map((room) => (
                   <span key={room} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm text-slate-300">{room}</span>
                 ))}
               </div>
-              <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-400">You can also create your own room, choose whether it is public or private, and add it to a space just like building out channels in a Discord server.</div>
-            </div>
-            <div />
-          </div>
-        </section>
-
-        <section id="signin" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How to sign in</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Getting started should feel simple, not confusing.</h2>
-              <p className="mt-4 text-lg leading-8 text-slate-300">We guide you through creating your account step by step — username, email, password, and a quick verification. Each step is explained clearly so you know exactly what’s happening and why.</p>
-              <div className="mt-8 space-y-4">
-                {[
-                  'Pick a username. This becomes your permanent Matrix ID, also called your MXID.',
-                  'Use a long passphrase as your password. Long and memorable is safer than short and tricky.',
-                  'Complete the CAPTCHA to stop bots and spam signups.',
-                  'Verify your email so you can confirm the account and recover it later.',
-                  'Then open Element and start chatting with your new @user:ckconflux.com identity.',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <span className="mt-0.5 h-5 w-5 flex-none text-cyan-200">•</span>
-                    <p className="text-slate-300">{item}</p>
-                  </div>
-                ))}
+              <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-400">
+                <p>
+                  Browse public rooms with{' '}
+                  <a href="https://matrixrooms.info/" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
+                    matrixrooms.info
+                  </a>
+                  , then join what fits your interests.
+                </p>
+                <p>Create your own room, choose public or private visibility, and organize rooms into spaces just like channels under a server.</p>
+                <p>
+                  Try this room first:{' '}
+                  <a href="https://matrix.to/#/%23draupnir:matrix.org" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
+                    #draupnir:matrix.org
+                  </a>
+                </p>
               </div>
             </div>
             <div />
@@ -375,6 +550,7 @@ export default function CkConfluxLandingPage() {
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
               <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
+              <div className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">Best for social updates</div>
               <h3 className="mt-5 text-xl font-semibold text-white">Mastodon</h3>
               <p className="mt-3 leading-7 text-slate-300">Best for public posting, following updates, and lightweight social discovery. It is a federated social network, which means you can follow people across many servers while keeping your home account here.</p>
               <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">New accounts require manual approval.</div>
@@ -385,6 +561,7 @@ export default function CkConfluxLandingPage() {
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
               <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
+              <div className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">Best for voice coordination</div>
               <h3 className="mt-5 text-xl font-semibold text-white">TeamSpeak</h3>
               <p className="mt-3 leading-7 text-slate-300">Best for low-latency voice sessions, gaming, and live coordination. If your group is voice-first, this is the fastest path from install to talking.</p>
               <div className="mt-5 space-y-2 text-sm text-cyan-200">
@@ -421,11 +598,22 @@ export default function CkConfluxLandingPage() {
                 <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">It’s a passion project maintained by Colonelkrud since 2015.</p>
                 <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">We focus on reliability and transparency:</p>
                 <ul className="mt-3 list-disc space-y-2 pl-6 text-lg leading-8 text-slate-300">
-                  <li>99.999% uptime over the past year</li>
-                  <li>3 incidents totaling 3 minutes and 14 seconds</li>
+                  <li>
+                    99.999%{' '}
+                    <a href="https://status.colonelkrud.com" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
+                      uptime
+                    </a>{' '}
+                    over the past year
+                  </li>
                   <li>Mean time between failures: 121.67 days</li>
                 </ul>
-                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">You can view uptime, maintenance, and incidents at https://status.colonelkrud.com</p>
+                <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">
+                  Check the{' '}
+                  <a href="https://status.colonelkrud.com" className="font-medium text-cyan-200 underline decoration-cyan-300/60 underline-offset-2">
+                    status page
+                  </a>{' '}
+                  for live uptime, maintenance updates, and incident history.
+                </p>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm text-cyan-200">
                   <a href="#" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Download ToS</a>
                   <a href="#" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Download Privacy Policy</a>
