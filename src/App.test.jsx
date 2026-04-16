@@ -10,16 +10,16 @@ describe('CK Conflux landing page', () => {
     expect(screen.getByText('CK Conflux')).toBeInTheDocument();
   });
 
-  it('contains key onboarding copy', () => {
+  it('contains start-here onboarding copy', () => {
     render(<App />);
-    expect(screen.getByText(/What is Element and Matrix, and why should you care/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/This becomes your permanent Matrix ID/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Begin with Element on Matrix/i)).toBeInTheDocument();
+    expect(screen.getByText(/Simple step-by-step onboarding/i)).toBeInTheDocument();
   });
 
   it('renders major CTAs', () => {
     render(<App />);
     expect(screen.getByRole('link', { name: /^Start with Element$/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^Register for Mastodon$/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Mastodon/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^Download TeamSpeak$/i })).toBeInTheDocument();
   });
 });
