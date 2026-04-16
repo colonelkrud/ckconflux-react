@@ -1,208 +1,14 @@
-import { motion } from 'framer-motion';
-import {
-  Shield,
-  MessageSquare,
-  Users,
-  Video,
-  Mic,
-  Globe,
-  ChevronRight,
-  CheckCircle2,
-  UserRound,
-  KeyRound,
-  Mail,
-  Captions,
-  HeartHandshake,
-} from 'lucide-react';
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const stagger = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.12,
-    },
-  },
-};
-
-function SignInFlowCard() {
-  const fields = [
-    {
-      icon: <UserRound className="h-5 w-5" />,
-      label: 'Choose a username',
-      value: '@yourname:ckconflux.com',
-      note: 'This becomes your permanent Matrix ID, also called your MXID. Your display name can change later, but your MXID does not.',
-    },
-    {
-      icon: <KeyRound className="h-5 w-5" />,
-      label: 'Create a safe password',
-      value: 'correct-horse-battery-lantern',
-      note: 'Use a long passphrase that is easy for you to remember. We require a strong-but-usable password score.',
-    },
-    {
-      icon: <Mail className="h-5 w-5" />,
-      label: 'Add your email',
-      value: '[email protected]',
-      note: 'Used for verification and account recovery.',
-    },
-    {
-      icon: <Captions className="h-5 w-5" />,
-      label: 'Complete CAPTCHA',
-      value: 'I am human',
-      note: 'This helps keep bots and spam out.',
-    },
-  ];
-
-  return (
-    <motion.div
-      variants={fadeUp}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.25 }}
-      className="rounded-[2rem] border border-cyan-300/15 bg-slate-900/80 p-5 shadow-2xl shadow-cyan-950/40"
-    >
-      <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/90 p-5">
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <div className="text-sm font-medium text-slate-400">Create your account</div>
-            <div className="mt-1 text-xl font-semibold text-white">Simple, secure sign up</div>
-          </div>
-          <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-cyan-200">matrix auth</div>
-        </div>
-
-        <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} className="space-y-3">
-          {fields.map((field, index) => (
-            <motion.div
-              key={field.label}
-              variants={fadeUp}
-              transition={{ delay: index * 0.12 }}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-xl bg-cyan-400/10 p-2 text-cyan-200">{field.icon}</div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-slate-300">{field.label}</div>
-                  <motion.div
-                    initial={{ width: 0, opacity: 0.35 }}
-                    whileInView={{ width: '100%', opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.75, delay: 0.1 + index * 0.15 }}
-                    className="mt-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white"
-                  >
-                    {field.value}
-                  </motion.div>
-                  <div className="mt-2 text-sm leading-6 text-slate-400">{field.note}</div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-          className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100"
-        >
-          After that, verify your email and continue into Element Web.
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
-
-function FeatureCard({ icon, title, body }) {
-  return (
-    <motion.div variants={fadeUp} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20">
-      <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">{icon}</div>
-      <h3 className="mt-5 text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 leading-7 text-slate-300">{body}</p>
-    </motion.div>
-  );
-}
-
-function GettingStartedCard({ title, body, cta, href }) {
-  return (
-    <motion.a
-      variants={fadeUp}
-      href={href}
-      className="group block rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/[0.07]"
-    >
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 leading-7 text-slate-300">{body}</p>
-      <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cyan-200">
-        {cta}
-        <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
-      </div>
-    </motion.a>
-  );
-}
-
-function LearnMoreCard() {
-  return (
-    <motion.div variants={fadeUp} className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-6 shadow-lg shadow-black/20">
-      <div className="rounded-2xl border border-cyan-300/15 bg-cyan-400/5 p-5">
-        <div className="text-sm font-medium uppercase tracking-[0.18em] text-cyan-200">Learn more</div>
-        <h3 className="mt-3 text-2xl font-semibold text-white">MXID details for people who want the technical version</h3>
-        <p className="mt-3 leading-7 text-slate-300">
-          Your Matrix ID uses the format <span className="font-medium text-white">@localpart:domain</span>. In{' '}
-          <span className="font-medium text-white">@yourname:ckconflux.com</span>, the username is the localpart and{' '}
-          <span className="font-medium text-white">ckconflux.com</span> is the homeserver domain.
-        </p>
-      </div>
-      <div className="mt-5 grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-sm font-semibold text-white">Immutable identity</div>
-          <p className="mt-2 text-sm leading-6 text-slate-400">Your MXID is effectively permanent. If you want a different MXID later, that means making a new account.</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-sm font-semibold text-white">Display name is flexible</div>
-          <p className="mt-2 text-sm leading-6 text-slate-400">What people usually see in chat can be changed later without replacing your account identity.</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-sm font-semibold text-white">Works across servers</div>
-          <p className="mt-2 text-sm leading-6 text-slate-400">Your identity is stable when you join rooms from other Matrix servers, which is one of the biggest differences from Discord.</p>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function SpaceCard({ title, rooms }) {
-  return (
-    <motion.div variants={fadeUp} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20">
-      <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Space</div>
-      <h3 className="mt-3 text-xl font-semibold text-white">{title}</h3>
-      <div className="mt-5 flex flex-wrap gap-2">
-        {rooms.map((room) => (
-          <span key={room} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm text-slate-300">
-            {room}
-          </span>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
 export default function CkConfluxLandingPage() {
   const matrixFeatures = [
     {
-      icon: <Shield className="h-6 w-6" />,
       title: 'Private by design',
       body: 'Element is a secure messenger built on Matrix, an open communication network designed for encrypted, decentralised chat and calling. It gives you a modern app experience without locking your identity into one company.',
     },
     {
-      icon: <Users className="h-6 w-6" />,
       title: 'Feels familiar if you use Discord',
       body: 'You get rooms, direct messages, spaces, file sharing, voice, video, and communities. The difference is that your identity travels with you as @user:ckconflux.com instead of being trapped inside a single platform.',
     },
     {
-      icon: <Video className="h-6 w-6" />,
       title: 'Built-in voice and video',
       body: 'Element supports voice and video calling, including Element Call for modern MatrixRTC-based calling and fallback VoIP support for wider compatibility across clients.',
     },
@@ -368,26 +174,26 @@ export default function CkConfluxLandingPage() {
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_25%)]" />
           <div className="relative mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-28">
-            <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl">
-              <motion.div variants={fadeUp} className="mb-6 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-200">
+            <div className="max-w-3xl">
+              <div className="mb-6 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-200">
                 Community-run chat, social, and voice
-              </motion.div>
-              <motion.h1 variants={fadeUp} className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              </div>
+              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
                 A safer, more private community home for people who are tired of Discord lock-in.
-              </motion.h1>
-              <motion.p variants={fadeUp} className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
                 CK Conflux brings together <span className="font-semibold text-white">Element chat on Matrix</span>,{' '}
                 <span className="font-semibold text-white">Mastodon social networking</span>, and <span className="font-semibold text-white">TeamSpeak voice</span>. It is built for people who want familiar community tools with more privacy, more ownership, and less dependence on a single company.
-              </motion.p>
-              <motion.div variants={fadeUp} className="mt-8 flex flex-col gap-3 sm:flex-row">
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a href="https://element.ckconflux.com" className="rounded-2xl bg-cyan-400 px-6 py-3 text-base font-semibold text-slate-950 shadow-xl shadow-cyan-500/20 transition hover:-translate-y-0.5">
                   Start with Element
                 </a>
                 <a href="#signin" className="rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10">
                   See the sign-up steps
                 </a>
-              </motion.div>
-              <motion.div variants={fadeUp} className="mt-8 grid gap-4 sm:grid-cols-3">
+              </div>
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <div className="text-sm text-slate-400">Chat identity</div>
                   <div className="mt-1 font-medium text-white">@user:ckconflux.com</div>
@@ -400,10 +206,10 @@ export default function CkConfluxLandingPage() {
                   <div className="text-sm text-slate-400">Voice server</div>
                   <div className="mt-1 font-medium text-white">ts3.ckconflux.com</div>
                 </div>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
 
-            <SignInFlowCard />
+            <div />
           </div>
         </section>
 
@@ -413,11 +219,14 @@ export default function CkConfluxLandingPage() {
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">What is Element and Matrix, and why should you care?</h2>
             <p className="mt-4 text-lg leading-8 text-slate-300">Element is the app. Matrix is the open communication network that powers it. Together, they give you modern chat and calling with more privacy, better portability, and a community that is not owned by a single platform.</p>
           </div>
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="mt-10 grid gap-6 lg:grid-cols-3">
-            {matrixFeatures.map((feature) => (
-              <FeatureCard key={feature.title} {...feature} />
-            ))}
-          </motion.div>
+            <div className="mt-10 grid gap-6 lg:grid-cols-3">
+              {matrixFeatures.map((feature) => (
+                <div key={feature.title} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20">
+                  <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
+                  <p className="mt-3 leading-7 text-slate-300">{feature.body}</p>
+                </div>
+              ))}
+            </div>
         </section>
 
         <section className="border-y border-white/10 bg-white/[0.03]">
@@ -434,17 +243,17 @@ export default function CkConfluxLandingPage() {
                 </div>
               ))}
             </div>
-            <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="mt-10 grid gap-4 lg:grid-cols-4">
+            <div className="mt-10 grid gap-4 lg:grid-cols-4">
               {mxidComparison.map((item) => (
-                <motion.div key={item.label} variants={fadeUp} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+                <div key={item.label} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
                   <div className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">{item.label}</div>
                   <div className="mt-4 text-sm font-medium text-slate-400">Discord</div>
                   <p className="mt-1 text-sm leading-6 text-slate-300">{item.discord}</p>
                   <div className="mt-4 text-sm font-medium text-slate-400">Matrix</div>
                   <p className="mt-1 text-sm leading-6 text-white">{item.matrix}</p>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </section>
 
@@ -457,27 +266,37 @@ export default function CkConfluxLandingPage() {
 
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200"><Users className="h-6 w-6" /></div>
+              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
               <h3 className="mt-5 text-xl font-semibold text-white">Spaces = servers</h3>
               <p className="mt-3 leading-7 text-slate-300">Spaces group related rooms together so your community feels organized. They work like Discord servers, but can also point to rooms that live elsewhere on Matrix.</p>
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200"><MessageSquare className="h-6 w-6" /></div>
+              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
               <h3 className="mt-5 text-xl font-semibold text-white">Rooms = channels</h3>
               <p className="mt-3 leading-7 text-slate-300">Rooms can be public or private. They can be used for general chat, announcements, help, media sharing, support, or topic-specific discussion.</p>
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200"><Video className="h-6 w-6" /></div>
+              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
               <h3 className="mt-5 text-xl font-semibold text-white">Call rooms = voice and video</h3>
               <p className="mt-3 leading-7 text-slate-300">Element supports voice, video, and screen sharing. Instead of treating calls as a separate world, Matrix can attach the call experience right to the room your group already uses.</p>
             </div>
           </div>
 
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="mt-10 grid gap-6 lg:grid-cols-3">
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {spaceExamples.map((space) => (
-              <SpaceCard key={space.title} {...space} />
+              <div key={space.title} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20">
+                <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Space</div>
+                <h3 className="mt-3 text-xl font-semibold text-white">{space.title}</h3>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {space.rooms.map((room) => (
+                    <span key={room} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm text-slate-300">
+                      {room}
+                    </span>
+                  ))}
+                </div>
+              </div>
             ))}
-          </motion.div>
+          </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-6">
@@ -491,17 +310,17 @@ export default function CkConfluxLandingPage() {
               </div>
               <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-400">You can also create your own room, choose whether it is public or private, and add it to a space just like building out channels in a Discord server.</div>
             </div>
-            <LearnMoreCard />
+            <div />
           </div>
         </section>
 
         <section id="signin" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={stagger}>
-              <motion.p variants={fadeUp} className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How to sign in</motion.p>
-              <motion.h2 variants={fadeUp} className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Getting started should feel simple, not confusing.</motion.h2>
-              <motion.p variants={fadeUp} className="mt-4 text-lg leading-8 text-slate-300">We guide you through creating your account step by step — username, email, password, and a quick verification. Each step is explained clearly so you know exactly what’s happening and why.</motion.p>
-              <motion.div variants={stagger} className="mt-8 space-y-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How to sign in</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Getting started should feel simple, not confusing.</h2>
+              <p className="mt-4 text-lg leading-8 text-slate-300">We guide you through creating your account step by step — username, email, password, and a quick verification. Each step is explained clearly so you know exactly what’s happening and why.</p>
+              <div className="mt-8 space-y-4">
                 {[
                   'Pick a username. This becomes your permanent Matrix ID, also called your MXID.',
                   'Use a long passphrase as your password. Long and memorable is safer than short and tricky.',
@@ -509,14 +328,14 @@ export default function CkConfluxLandingPage() {
                   'Verify your email so you can confirm the account and recover it later.',
                   'Then open Element and start chatting with your new @user:ckconflux.com identity.',
                 ].map((item) => (
-                  <motion.div key={item} variants={fadeUp} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-none text-cyan-200" />
+                  <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <span className="mt-0.5 h-5 w-5 flex-none text-cyan-200">•</span>
                     <p className="text-slate-300">{item}</p>
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
-            </motion.div>
-            <SignInFlowCard />
+              </div>
+            </div>
+            <div />
           </div>
         </section>
 
@@ -527,18 +346,26 @@ export default function CkConfluxLandingPage() {
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Choose the tool that matches how you want to connect</h2>
               <p className="mt-4 text-lg leading-8 text-slate-300">Chat, social posting, and voice each have a different job. The easiest acquisition path is to explain the benefit first, then the next action.</p>
             </div>
-            <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="mt-10 grid gap-6 lg:grid-cols-3">
+            <div className="mt-10 grid gap-6 lg:grid-cols-3">
               {learnSections.map((section) => (
-                <GettingStartedCard key={section.title} {...section} />
+                <a
+                  key={section.title}
+                  href={section.href}
+                  className="group block rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/[0.07]"
+                >
+                  <h3 className="text-xl font-semibold text-white">{section.title}</h3>
+                  <p className="mt-3 leading-7 text-slate-300">{section.body}</p>
+                  <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cyan-200">{section.cta}</div>
+                </a>
               ))}
-            </motion.div>
+            </div>
           </div>
         </section>
 
         <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200"><MessageSquare className="h-6 w-6" /></div>
+              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
               <h3 className="mt-5 text-xl font-semibold text-white">Element on Matrix</h3>
               <p className="mt-3 leading-7 text-slate-300">Best for persistent chat, communities, direct messages, media sharing, spaces, voice messages, and secure collaboration. Great default choice for most users.</p>
               <div className="mt-5 space-y-2 text-sm text-cyan-200">
@@ -547,7 +374,7 @@ export default function CkConfluxLandingPage() {
               </div>
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200"><Globe className="h-6 w-6" /></div>
+              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
               <h3 className="mt-5 text-xl font-semibold text-white">Mastodon</h3>
               <p className="mt-3 leading-7 text-slate-300">Best for public posting, following updates, and lightweight social discovery. It is a federated social network, which means you can follow people across many servers while keeping your home account here.</p>
               <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">New accounts require manual approval.</div>
@@ -557,7 +384,7 @@ export default function CkConfluxLandingPage() {
               </div>
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200"><Mic className="h-6 w-6" /></div>
+              <div className="inline-flex rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">•</div>
               <h3 className="mt-5 text-xl font-semibold text-white">TeamSpeak</h3>
               <p className="mt-3 leading-7 text-slate-300">Best for low-latency voice sessions, gaming, and live coordination. If your group is voice-first, this is the fastest path from install to talking.</p>
               <div className="mt-5 space-y-2 text-sm text-cyan-200">
@@ -608,7 +435,7 @@ export default function CkConfluxLandingPage() {
               <div className="flex flex-col gap-3">
                 <a href="https://element.ckconflux.com" className="rounded-2xl bg-cyan-400 px-6 py-3 text-center text-base font-semibold text-slate-950 transition hover:-translate-y-0.5">Join with Element</a>
                 <a href="https://buymeacoffee.com/conflux" className="rounded-2xl bg-amber-300 px-6 py-3 text-center text-base font-semibold text-slate-950 transition hover:-translate-y-0.5">
-                  <span className="inline-flex items-center gap-2"><HeartHandshake className="h-5 w-5" /> Support us</span>
+                  <span className="inline-flex items-center gap-2">Support us</span>
                 </a>
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm leading-6 text-slate-300">Also available: social posting on <span className="font-medium text-white">masto.colonelkrud.com</span> and voice chat on <span className="font-medium text-white">ts3.ckconflux.com</span>.</div>
               </div>
