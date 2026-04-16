@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import App from './App';
 
+void App;
+
 describe('CK Conflux landing page', () => {
   it('renders without crashing', () => {
     render(<App />);
