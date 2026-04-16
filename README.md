@@ -87,3 +87,7 @@ Tag strategy:
 ## Helm/Kubernetes future deployment note
 
 This repo intentionally avoids embedding Helm files so it remains a clean app/image source. A separate chart repo can consume the GHCR image tags above and manage environment-specific Helm values (replicas, ingress, secrets, resources, probes, etc.).
+
+## Dependency lockfile hygiene
+
+This repository uses **npm** (not yarn/pnpm). When dependencies change, run `npm install` and commit the updated `package-lock.json`. Both CI and Docker builds use `npm ci`, which will fail if `package.json` and `package-lock.json` are out of sync.
