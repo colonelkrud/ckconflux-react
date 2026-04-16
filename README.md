@@ -20,7 +20,7 @@ A production-ready React landing page app for CK Conflux that introduces Matrix/
 ## Local development
 
 ```bash
-npm ci
+npm ci --include=dev
 npm run dev
 ```
 
@@ -90,4 +90,4 @@ This repo intentionally avoids embedding Helm files so it remains a clean app/im
 
 ## Dependency lockfile hygiene
 
-This repository uses **npm** (not yarn/pnpm). When dependencies change, run `npm install` and commit the updated `package-lock.json`. Both CI and Docker builds use `npm ci`, which will fail if `package.json` and `package-lock.json` are out of sync.
+This repository uses **npm** (not yarn/pnpm). When dependencies change, run `npm install` and commit the updated `package-lock.json`. Both CI and Docker builds use `npm ci --include=dev`, which forces build/test tooling installation even if the environment defaults to production-mode omission.
