@@ -309,7 +309,7 @@ function HomePage() {
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">Private community chat and calls without platform lock-in.</h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">CK Conflux is built around Element on Matrix. Start there first, then add Mastodon or TeamSpeak if needed.</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a href="https://element.ckconflux.com" className="rounded-xl bg-cyan-400 px-5 py-3 text-center text-base font-semibold text-slate-950 shadow-xl shadow-cyan-500/25 transition hover:-translate-y-0.5">Start with Element</a>
+              <a href="https://element.ckconflux.com/#/register" className="rounded-xl bg-cyan-400 px-5 py-3 text-center text-base font-semibold text-slate-950 shadow-xl shadow-cyan-500/25 transition hover:-translate-y-0.5">Register with Element</a>
               <a href="#signin" className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-center text-base font-semibold text-white transition hover:bg-white/10">View sign-in steps</a>
             </div>
           </div>
