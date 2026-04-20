@@ -222,7 +222,7 @@ const faqItems = [
   { q: 'Does Element support screen sharing?', a: <p>Yes, on supported browsers/platforms. Start a call, choose share screen/window/tab, then confirm permission prompts.</p> },
   {
     q: 'Can I use different display names in different rooms?',
-    a: <p>Your <abbr title="Matrix user ID">MXID</abbr> stays fixed (for example <pre>@name:ckconflux.com</pre>). Your display name is usually global, though some clients/room settings can present room-specific profile details.</p>,
+    a: <p>Your <abbr title="Matrix user ID">MXID</abbr> stays fixed (for example <code>@name:ckconflux.com</code>). Your display name is usually global, though some clients/room settings can present room-specific profile details.</p>,
   },
   {
     q: 'How do direct messages work in Element?',
