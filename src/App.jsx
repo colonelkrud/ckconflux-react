@@ -326,7 +326,7 @@ function HomePage() {
                 'Open Element Web and choose "Create Account".',
                 'Pick your username. This becomes your permanent Matrix user ID (<abbr>MXID</abbr>).',
                 'Set a strong passphrase and add your recovery email.',
-                'Complete CAPTCHA, verify email, and enter Element.',
+                'Complete the CAPTCHA, verify your email, and enter Element.',
               ].map((step, i) => (
                 <li key={step} className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-slate-200">
                   <span className="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-cyan-400/20 text-xs font-semibold text-cyan-200">{i + 1}</span>
