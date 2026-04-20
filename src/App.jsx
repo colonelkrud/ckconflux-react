@@ -215,26 +215,26 @@ const faqItems = [
     q: 'What is MatrixRTC / Element Call?',
     a: (
       <p>
-        MatrixRTC is Matrix real-time calling technology. In Element this appears as Element Call for room-based voice/video. It keeps calls in your room workflow instead of forcing separate apps.
+        MatrixRTC (Matrix real-time calling) is a native Matrix video conferencing application which lets you make secure video calls with one or more people. In Element this appears as Element Call for room-based voice/video. It keeps calls in your room workflow instead of forcing separate apps.
       </p>
     ),
   },
   { q: 'Does Element support screen sharing?', a: <p>Yes, on supported browsers/platforms. Start a call, choose share screen/window/tab, then confirm permission prompts.</p> },
   {
     q: 'Can I use different display names in different rooms?',
-    a: <p>Your <abbr title="Matrix user ID">MXID</abbr> stays fixed (for example <code>@name:ckconflux.com</code>). Your display name is usually global, though some clients/room settings can present room-specific profile details.</p>,
+    a: <p>Yes, you can change your display name either globally or for each room individually if your client supports it. Note that this is different from your Matrix User ID (<abbr>MXID</abbr>) which stays fixed (for example <code>@name:ckconflux.com</code>).</p>,
   },
   {
-    q: 'How do direct messages work in Element?',
-    a: <p>Use Start Chat/New Message, select a user, and Element creates a DM room. DM rooms still follow Matrix safety/reporting tools and server rules.</p>,
+    q: 'How do I send direct messages in Element?',
+    a: <p>Use &quot;Start Chat/New Message&quot; and select the user you wish to DM. Element creates a DM room which still follows Matrix safety/reporting tools and server rules.</p>,
   },
   {
     q: 'How do I invite friends with registration codes?',
-    a: <p>Share a registration code from an approved source. Your friend opens element.ckconflux.com, chooses Create account, and enters the code during signup.</p>,
+    a: <p>Share a registration code with them privately offline (i.e. not through element). Your friend enters the code when they sign up at element.ckconflux.com.</p>,
   },
   {
     q: 'Can registration codes be revoked?',
-    a: <p>Yes. Codes are access controls and may be revoked for abuse, spam, or policy violations. See <a className="font-semibold text-cyan-200 underline" href="/terms">Terms of Use</a>.</p>,
+    a: <p>Yes. Codes may be revoked for abuse, spam, or policy violations just like any other access control. See <a className="font-semibold text-cyan-200 underline" href="/terms">Terms of Use</a>.</p>,
   },
   {
     q: 'How do I get a registration token?',
@@ -250,15 +250,15 @@ const faqItems = [
   },
   {
     q: 'What mobile apps can I use?',
-    a: <p>Recommended mobile start is Element X (iOS/Android). Your account can also work with other Matrix clients from the ecosystem list. For web, use element.ckconflux.com.</p>,
+    a: <p>Element X (available on iOS and Android) is the recommended mobile app but your account can also work with any Matrix clients from the ecosystem list. For web, use element.ckconflux.com.</p>,
   },
   {
     q: 'What mobile apps can I use for Mastodon?',
-    a: <p>Use the official Mastodon app or other compatible apps depending on iOS/Android preferences. App features vary, but account compatibility is broad.</p>,
+    a: <p>Use the official Mastodon app or other compatible apps depending on your iOS/Android preferences. App features vary, but account compatibility is broad.</p>,
   },
   {
     q: 'Is there a mobile app for TeamSpeak?',
-    a: <p>Yes. TeamSpeak has mobile clients, and desktop clients remain best for longer sessions and advanced setups.</p>,
+    a: <p>Yes. TeamSpeak has mobile clients, although desktop clients remain best for longer sessions and advanced setups.</p>,
   },
   {
     q: 'TeamSpeak 6 vs TeamSpeak 3?',
@@ -266,7 +266,7 @@ const faqItems = [
   },
   {
     q: 'How do I report content in Mastodon?',
-    a: <p>Use Report from post/account menus, include context, and reference policy concerns when needed. Community conduct standards are in <a className="font-semibold text-cyan-200 underline" href="/rules">Server Rules</a>.</p>,
+    a: <p>Use "Report" from the post/account menus. When writing a report, include context, and reference policy concerns when needed. Community conduct standards are in <a className="font-semibold text-cyan-200 underline" href="/rules">Server Rules</a>.</p>,
   },
   {
     q: 'How do I report content in Element?',
@@ -278,11 +278,11 @@ const faqItems = [
   },
   {
     q: 'How do I ignore users in Element?',
-    a: <p>Open user profile → add to ignore list. This hides messages and reduces unwanted contact. For persistent harassment, report using moderation flows and the Rules/Terms pages.</p>,
+    a: <p>Click on their icon to open the user profile menu of the person you wish to ignore and select "ignore". This hides all their messages from you and reduces unwanted contact. For persistent harassment, report using moderation flows and the Rules/Terms pages.</p>,
   },
   {
     q: 'How do I ignore users in Mastodon?',
-    a: <p>Use Mute for softer filtering or Block for stronger prevention. If behavior violates policy, submit a report and reference applicable <a className="font-semibold text-cyan-200 underline" href="/rules">Rules</a>.</p>,
+    a: <p>Use Mute for softer filtering or Block for stronger prevention. If someone&apos;s behavior violates policy, submit a report which references applicable <a className="font-semibold text-cyan-200 underline" href="/rules">Rules</a>.</p>,
   },
   {
     q: 'How do notifications work in Element?',
