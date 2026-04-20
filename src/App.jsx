@@ -50,7 +50,7 @@ function LegalLayout({ title, lastUpdated, children }) {
 }
 
 const signUpFields = [
-  { key: 'username', label: 'Choose a username', value: '@yourname:ckconflux.com', helper: 'Permanent Matrix user ID (<abbr>MXID</abbr>).' },
+  { key: 'username', label: 'Choose a username', value: '@yourname:ckconflux.com', helper: 'Permanent Matrix user ID (MXID).' },
   { key: 'password', label: 'Create a password', value: 'correct-horse-battery-lantern', helper: 'Use a long, memorable passphrase.' },
   { key: 'email', label: 'Add your email', value: '[email protected]', helper: 'For verification and recovery.' },
 ];
@@ -324,7 +324,7 @@ function HomePage() {
             <ol className="mt-4 space-y-3">
               {[
                 'Open Element Web and choose "Create Account".',
-                'Pick your username. This becomes your permanent Matrix user ID (<abbr>MXID</abbr>).',
+                'Pick your username. This becomes your permanent Matrix user ID (MXID).',
                 'Set a strong passphrase and add your recovery email.',
                 'Complete the CAPTCHA, verify your email, and enter Element.',
               ].map((step, i) => (
