@@ -50,7 +50,7 @@ function LegalLayout({ title, lastUpdated, children }) {
 }
 
 const signUpFields = [
-  { key: 'username', label: 'Choose a username', value: '@yourname:ckconflux.com', helper: 'Permanent Matrix ID (MXID).' },
+  { key: 'username', label: 'Choose a username', value: '@yourname:ckconflux.com', helper: 'Permanent Matrix user ID (<abbr>MXID</abbr>).' },
   { key: 'password', label: 'Create a password', value: 'correct-horse-battery-lantern', helper: 'Use a long, memorable passphrase.' },
   { key: 'email', label: 'Add your email', value: '[email protected]', helper: 'For verification and recovery.' },
 ];
@@ -222,7 +222,7 @@ const faqItems = [
   { q: 'Does Element support screen sharing?', a: <p>Yes, on supported browsers/platforms. Start a call, choose share screen/window/tab, then confirm permission prompts.</p> },
   {
     q: 'Can I use different display names in different rooms?',
-    a: <p>Your MXID stays fixed (for example @name:ckconflux.com). Your display name is usually global, though some clients/room settings can present room-specific profile details.</p>,
+    a: <p>Your <abbr title="Matrix user ID">MXID</abbr> stays fixed (for example <pre>@name:ckconflux.com</pre>). Your display name is usually global, though some clients/room settings can present room-specific profile details.</p>,
   },
   {
     q: 'How do direct messages work in Element?',
@@ -324,7 +324,7 @@ function HomePage() {
             <ol className="mt-4 space-y-3">
               {[
                 'Open Element Web and choose Create account.',
-                'Pick your username. This becomes your permanent MXID.',
+                'Pick your username. This becomes your permanent Matrix user ID (<abbr>MXID</abbr>).',
                 'Set a strong passphrase and add your recovery email.',
                 'Complete CAPTCHA, verify email, and enter Element.',
               ].map((step, i) => (
