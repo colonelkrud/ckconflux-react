@@ -323,7 +323,7 @@ function HomePage() {
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">Simple step-by-step onboarding</h2>
             <ol className="mt-4 space-y-3">
               {[
-                'Open Element Web and choose Create account.',
+                'Open Element Web and choose "Create Account".',
                 'Pick your username. This becomes your permanent Matrix user ID (<abbr>MXID</abbr>).',
                 'Set a strong passphrase and add your recovery email.',
                 'Complete CAPTCHA, verify email, and enter Element.',
