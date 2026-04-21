@@ -278,7 +278,7 @@ const faqItems = [
   },
   {
     q: 'How do I ignore users in Element?',
-    a: <p>Click on their icon to open the user profile menu of the person you wish to ignore and select "ignore". This hides all their messages from you and reduces unwanted contact. For persistent harassment, report using moderation flows and the Rules/Terms pages.</p>,
+    a: <p>Click on the profile picture of the person you wish to ignore to open their user profile menu and select "ignore". This hides all their messages from you and reduces unwanted contact. For persistent harassment, report using moderation flows and the Rules/Terms pages.</p>,
   },
   {
     q: 'How do I ignore users in Mastodon?',
@@ -286,11 +286,14 @@ const faqItems = [
   },
   {
     q: 'How do notifications work in Element?',
-    a: <p>Configure both global and per-room settings (mute, mentions-only, custom rules). Tune noisy rooms first so onboarding rooms stay useful.</p>,
+    a: <p>You can configure notification settings globally and for each individual room.
+	If you don&apos;t want to mute a room completely,
+	you can configure it to only notify you when you are mentioned or set up other custom rules.
+	Tune noisy rooms first so onboarding rooms stay useful.</p>,
   },
   {
     q: 'Do files stay forever?',
-    a: <p>Do not assume indefinite retention. Storage and retention are best-effort and may vary by policy, server operations, and federation behavior. See the <a className="font-semibold text-cyan-200 underline" href="/privacy">Privacy Policy</a> and <a className="font-semibold text-cyan-200 underline" href="/terms">Terms of Use</a>.</p>,
+    a: <p>Do not assume indefinite retention. Storage and retention are best-effort but may vary by policy, server operations, and federation behavior. See the <a className="font-semibold text-cyan-200 underline" href="/privacy">Privacy Policy</a> and <a className="font-semibold text-cyan-200 underline" href="/terms">Terms of Use</a>.</p>,
   },
   {
     q: 'How is moderation handled?',
