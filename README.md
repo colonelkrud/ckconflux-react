@@ -102,6 +102,7 @@ secretRefs:
 ```
 
 Probes default to HTTP `GET /` on the `http` port, which is safe for this static nginx-served app.
+The default container security context keeps `readOnlyRootFilesystem: false` to avoid nginx runtime write-path failures out of the box; you can harden this with explicit writable mounts via `extraVolumes`/`extraVolumeMounts` if needed.
 
 ## Validation commands (no cluster required)
 
