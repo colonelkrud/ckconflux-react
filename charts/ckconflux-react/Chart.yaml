@@ -1,0 +1,16 @@
+apiVersion: v2
+name: ckconflux-react
+description: Helm chart for deploying the ckconflux-react static web app.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.26.0-0"
+home: https://github.com/colonelkrud/ckconflux-react
+sources:
+  - https://github.com/colonelkrud/ckconflux-react
+keywords:
+  - react
+  - static-site
+  - nginx
+maintainers:
+  - name: ckconflux-react maintainers

@@ -1,0 +1,49 @@
+name: Helm Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'chart-v*'
+    paths:
+      - 'charts/ckconflux-react/Chart.yaml'
+      - 'charts/ckconflux-react/**'
+      - '.github/workflows/helm-release.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: helm-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.3.0
+        with:
+          version: v3.15.4
+
+      - name: Log in to GHCR for OCI chart push
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package chart
+        run: |
+          mkdir -p .cr-release-packages
+          helm dependency update charts/ckconflux-react
+          helm package charts/ckconflux-react --destination .cr-release-packages
+
+      - name: Push chart to GHCR OCI registry
+        run: |
+          CHART_PACKAGE=$(ls .cr-release-packages/ckconflux-react-*.tgz)
+          helm push "$CHART_PACKAGE" oci://ghcr.io/${{ github.repository_owner }}/charts
