@@ -1,0 +1,17 @@
+replicaCount: 2
+image:
+  tag: "ci"
+ingress:
+  enabled: true
+  hosts:
+    - host: ckconflux.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: NODE_ENV
+    value: production
+configMapRefs:
+  - ckconflux-react-config
+secretRefs:
+  - ckconflux-react-secret
