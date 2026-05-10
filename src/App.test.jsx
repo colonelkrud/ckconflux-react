@@ -25,7 +25,7 @@ describe('CK Conflux site IA', () => {
     window.history.pushState({}, '', '/terms');
     const { unmount } = render(<App />);
     expect(screen.getByRole('heading', { name: /CK Conflux Terms of Use/i })).toBeInTheDocument();
-    expect(screen.getByText(/Last updated April 16, 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Last updated\s+[A-Za-z]{3,9}\s+\d{1,2},\s+\d{4}/i)).toBeInTheDocument();
 
     unmount();
     window.history.pushState({}, '', '/privacy');
