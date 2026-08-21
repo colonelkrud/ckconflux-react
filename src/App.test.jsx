@@ -10,6 +10,7 @@ describe('CK Conflux site IA', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /Private community chat and calls/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open Help Center/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'ts6.ckconflux.com' })).toHaveAttribute('href', 'ts3server://ts6.ckconflux.com');
   });
 
   it('renders help page with policy links', () => {
