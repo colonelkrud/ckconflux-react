@@ -355,7 +355,10 @@ function HomePage() {
           </article>
           <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <h3 className="text-lg font-semibold text-white">TeamSpeak</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-300">Voice-first low latency comms. Server: ts3.ckconflux.com.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Voice-first low latency comms. Server:{' '}
+              <a className="font-semibold text-cyan-200 underline" href="ts3server://ts6.ckconflux.com">ts6.ckconflux.com</a>.
+            </p>
             <a href="https://www.teamspeak.com/en/downloads/" className="mt-4 inline-flex rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white">Download TeamSpeak</a>
           </article>
         </div>
