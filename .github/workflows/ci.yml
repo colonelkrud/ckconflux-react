@@ -25,6 +25,19 @@ jobs:
         run: npm ci
       - run: npm run test:run
       - run: npm run build
+      - name: Verify production brand assets
+        run: |
+          test -f dist/favicon.ico
+          test -f dist/favicon-16x16.png
+          test -f dist/favicon-32x32.png
+          test -f dist/apple-touch-icon.png
+          test -f dist/android-chrome-192x192.png
+          test -f dist/site.webmanifest
+          test -f dist/brand/v1/ckconflux-symbol.svg
+          test -f dist/brand/v1/ckconflux-favicon-dark.svg
+          test -f dist/brand/v1/ckconflux-favicon-light.svg
+          grep -q '/brand/v1/ckconflux-favicon-dark.svg' dist/index.html
+          grep -q '/site.webmanifest' dist/index.html
       - run: npm run lint
 
   helm-validate:
