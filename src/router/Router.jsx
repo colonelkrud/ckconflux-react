@@ -4,18 +4,18 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 const RouterContext = createContext(null);
 
 export function Router({ children }) {
-  const [pathname, setPathname] = useState(() => window.location.pathname);
+  const [location, setLocation] = useState(() => ({ pathname: window.location.pathname, navigationKey: 0 }));
   useEffect(() => {
-    const handlePopState = () => setPathname(window.location.pathname);
+    const handlePopState = () => setLocation((current) => ({ pathname: window.location.pathname, navigationKey: current.navigationKey + 1 }));
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
   const navigate = useCallback((to) => {
     if (to === window.location.pathname) return;
     window.history.pushState({}, '', to);
-    setPathname(window.location.pathname);
+    setLocation((current) => ({ pathname: window.location.pathname, navigationKey: current.navigationKey + 1 }));
   }, []);
-  const value = useMemo(() => ({ pathname, navigate }), [navigate, pathname]);
+  const value = useMemo(() => ({ pathname: location.pathname, navigationKey: location.navigationKey, navigate }), [location, navigate]);
   return <RouterContext.Provider value={value}>{children}</RouterContext.Provider>;
 }
 
