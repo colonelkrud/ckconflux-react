@@ -61,7 +61,7 @@ describe('CK Conflux application architecture', () => {
     renderPath('/');
     const homeHeading = screen.getByRole('heading', { name: /Private community chat and calls/i });
     expect(homeHeading).not.toHaveFocus();
-    fireEvent.click(screen.getByRole('link', { name: 'Help' }));
+    fireEvent.click(screen.getByRole('link', { name: /Open Help Center/i }));
     const helpHeading = screen.getByRole('heading', { name: /Matrix onboarding/i });
     expect(helpHeading).toHaveFocus();
     expect(helpHeading).toHaveAttribute('tabindex', '-1');
