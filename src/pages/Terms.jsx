@@ -75,7 +75,7 @@ export default function TermsPage() {
         <h2 className="text-xl font-semibold text-white">User Privacy and Data Handling Practices</h2>
         <ul className="mt-2 list-disc pl-5">
           <li>Expect no privacy in public rooms; communications there are publicly accessible.</li>
-          <li>Logs including IP addresses are retained for 30 days for performance, troubleshooting, and security.</li>
+          <li>CK Conflux operational logs, including IP addresses, are retained for 30 days for performance, troubleshooting, and security. Mastodon application records have separate retention periods described in the Privacy Model.</li>
           <li>Private messages and calls use end-to-end encryption (e2ee) by default where supported.</li>
           <li>We use industry-standard encryption and security practices to protect user data.</li>
           <li>We comply with GDPR data removal requests upon written request.</li>
@@ -123,7 +123,7 @@ export default function TermsPage() {
 
       <section>
         <h2 className="text-xl font-semibold text-white">No Guarantee of Uptime or Service Levels</h2>
-        <p>CK Conflux services are provided without explicit or implicit uptime or performance guarantees. For transparency on disruptions and outages, see status.colonelkrud.com.</p>
+        <p>CK Conflux services are provided without explicit or implicit uptime or performance guarantees. For transparency on disruptions and outages, see status.ckconflux.com.</p>
       </section>
 
       <section>

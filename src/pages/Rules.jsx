@@ -13,7 +13,7 @@ export default function RulesPage() {
     ['Accountability for Content', 'You are responsible for the content you publish. Inappropriate content may be removed and can lead to suspension.'],
     ['Follow Platform Updates', 'Stay informed about updates to community rules and features. Compliance with new rules is expected.'],
     ['Maximum File Size Limit', 'All uploads (images, videos, documents) must not exceed 100MB per file to support server operation and accessibility.'],
-    ['CSAM Scanning Enforcement', 'All uploaded content is scanned for CSAM using Cloudflare. Identified CSAM triggers immediate termination and legal reporting.'],
+    ['CSAM Enforcement', 'CK Conflux uses available service and provider controls, including Cloudflare where applicable, to detect CSAM in content those controls can inspect. End-to-end encrypted Matrix media may be stored only as ciphertext and is not necessarily available to server-side scanning. Identified CSAM triggers immediate termination and legal reporting.'],
   ];
 
   return (
