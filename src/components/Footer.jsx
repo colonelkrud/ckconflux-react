@@ -1,7 +1,7 @@
 import { SiteLink } from './SiteLink';
 const groups = [
   ['Explore', [['Membership','/membership'],['Security','/security'],['Status','/status']]],
-  ['Community', [['Help','/help'],['Support','/support'],['TeamSpeak','/teamspeak']]],
+  ['Community', [['Help','/help'],['Support','/support'],['TeamSpeak 6 Beta','/teamspeak']]],
   ['Legal', [['Privacy','/privacy'],['Terms','/terms'],['Rules','/rules']]],
 ];
 export default function Footer() {

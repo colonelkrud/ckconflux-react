@@ -42,26 +42,9 @@ const faqItems = [
     q: 'What should I use first?',
     a: (
       <p>
-        Start with <a className="font-semibold text-cyan-200 underline" href="https://element.ckconflux.com">element.ckconflux.com</a>. It is the default path for chat, DMs, spaces, voice, and video. Most users should complete onboarding there first, then optionally add Mastodon or TeamSpeak.
+        Start with <Link className="font-semibold text-cyan-200 underline" to="/matrix">Element on Matrix</Link>. For voice and video, use <Link className="font-semibold text-cyan-200 underline" to="/calls">Element Call</Link>. TeamSpeak 6 Beta is an optional, separate service.
       </p>
     ),
-  },
-  {
-    q: 'What is MatrixRTC / Element Call?',
-    a: (
-      <p>
-        MatrixRTC (Matrix real-time calling) is a native Matrix video conferencing application which lets you make secure video calls with one or more people. In Element this appears as Element Call for room-based voice/video. It keeps calls in your room workflow instead of forcing separate apps.
-      </p>
-    ),
-  },
-  { q: 'Does Element support screen sharing?', a: <p>Yes, on supported browsers/platforms. Start a call, choose share screen/window/tab, then confirm permission prompts.</p> },
-  {
-    q: 'Can I use different display names in different rooms?',
-    a: <p>Yes, you can change your display name either globally or for each room individually if your client supports it. Note that this is different from your Matrix User ID (<abbr>MXID</abbr>) which stays fixed (for example <code>@name:ckconflux.com</code>).</p>,
-  },
-  {
-    q: 'How do I send direct messages in Element?',
-    a: <p>Use &quot;Start Chat/New Message&quot; and select the user you wish to DM. Element creates a DM room which still follows Matrix safety/reporting tools and server rules.</p>,
   },
   {
     q: 'How do I invite friends with registration codes?',
@@ -76,28 +59,8 @@ const faqItems = [
     a: <p>Ask an existing member or use a supported tier at <a className="font-semibold text-cyan-200 underline" href="https://buymeacoffee.com/conflux">Buy Me a Coffee</a>.</p>,
   },
   {
-    q: 'Can I discover communities outside this server?',
-    a: <p>Yes. Matrix is federated. Start with your local room directory, then discover remote/public rooms via <a className="font-semibold text-cyan-200 underline" href="https://matrixrooms.info/">matrixrooms.info</a>.</p>,
-  },
-  {
-    q: 'Can I use another Matrix client besides Element?',
-    a: <p>Yes. You are not locked into one app. Matrix supports many clients; browse options at <a className="font-semibold text-cyan-200 underline" href="https://matrix.org/ecosystem/clients/">matrix.org/ecosystem/clients</a>.</p>,
-  },
-  {
-    q: 'What mobile apps can I use?',
-    a: <p>Element X (available on iOS and Android) is the recommended mobile app but your account can also work with any Matrix clients from the ecosystem list. For web, use element.ckconflux.com.</p>,
-  },
-  {
     q: 'What mobile apps can I use for Mastodon?',
     a: <p>Use the official Mastodon app or other compatible apps depending on your iOS/Android preferences. App features vary, but account compatibility is broad.</p>,
-  },
-  {
-    q: 'Is there a mobile app for TeamSpeak?',
-    a: <p>Yes. TeamSpeak has mobile clients, although desktop clients remain best for longer sessions and advanced setups.</p>,
-  },
-  {
-    q: 'TeamSpeak 6 vs TeamSpeak 3?',
-    a: <p>Both are used. If you want modern UI, try TeamSpeak 6 first. If your workflow or plugin setup depends on TS3 stability, TS3 remains acceptable.</p>,
   },
   {
     q: 'How do I report content in Mastodon?',
@@ -178,4 +141,3 @@ export default function HelpPage() {
     </section>
   );
 }
-
