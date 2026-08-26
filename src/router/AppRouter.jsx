@@ -23,12 +23,13 @@ const plannedRoutes = {
 const routes = {'/': <Home />, '/help': <Help />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
 
 export default function AppRouter() {
-  const { pathname } = useRouter();
+  const { pathname, navigationKey } = useRouter();
   const planned = plannedRoutes[pathname];
   const page = routes[pathname] ?? (planned ? <PlannedPage eyebrow={planned[0]} title={planned[1]} description={planned[2]} action={planned[3]} /> : <NotFound />);
   useEffect(() => {
+    if (navigationKey === 0) return;
     const heading = document.querySelector('#main-content h1');
     if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus(); }
-  }, [pathname]);
+  }, [navigationKey]);
   return <><Metadata pathname={pathname} /><SiteLayout>{page}</SiteLayout></>;
 }
