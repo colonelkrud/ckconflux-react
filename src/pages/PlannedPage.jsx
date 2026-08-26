@@ -1,0 +1,4 @@
+import { ExternalLink, SiteLink } from '../components/SiteLink';
+export default function PlannedPage({ eyebrow, title, description, action }) {
+  return <section className="mx-auto w-full max-w-4xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">{eyebrow}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{title}</h1><p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">{description}</p>{action && (action.external ? <ExternalLink href={action.to} className="mt-6 inline-flex rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950">{action.label}</ExternalLink> : <SiteLink to={action.to} className="mt-6 inline-flex rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950">{action.label}</SiteLink>)}</section>;
+}

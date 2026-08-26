@@ -1,0 +1,2 @@
+import { SiteLink } from '../components/SiteLink';
+export default function NotFound() { return <section className="mx-auto max-w-4xl px-4 py-20 text-center"><p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">404</p><h1 className="mt-2 text-4xl font-semibold text-white">Page not found</h1><p className="mt-4 text-slate-300">The page you requested does not exist or may have moved.</p><SiteLink to="/" className="mt-6 inline-flex rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950">Return home</SiteLink></section>; }
