@@ -39,111 +39,36 @@ function AccordionItem({ title, children, defaultOpen = false }) {
 void AccordionItem;
 
 const faqItems = [
-  {
-    q: 'What should I use first?',
-    a: (
-      <p>
-        Start with <Link className="font-semibold text-cyan-200 underline" to="/matrix">Element on Matrix</Link>. For voice and video, use <Link className="font-semibold text-cyan-200 underline" to="/calls">Element Call</Link>. TeamSpeak 6 Beta is an optional, separate service.
-      </p>
-    ),
-  },
-  {
-    q: 'How do I invite friends with registration codes?',
-    a: <p>Share a registration code with them privately offline (i.e. not through element). Your friend enters the code when they sign up at element.ckconflux.com.</p>,
-  },
-  {
-    q: 'Can registration codes be revoked?',
-    a: <p>Yes. Codes may be revoked for abuse, spam, or policy violations just like any other access control. See <Link className="font-semibold text-cyan-200 underline" to="/terms">Terms of Use</Link>.</p>,
-  },
-  {
-    q: 'How do I get a registration token?',
-    a: <p>Ask an existing member or use a supported tier at <a className="font-semibold text-cyan-200 underline" href="https://buymeacoffee.com/conflux">Buy Me a Coffee</a>.</p>,
-  },
-  {
-    q: 'What mobile apps can I use for Mastodon?',
-    a: <p>Use the official Mastodon app or other compatible apps depending on your iOS/Android preferences. App features vary, but account compatibility is broad.</p>,
-  },
-  {
-    q: 'How do I report content in Mastodon?',
-    a: <p>Use "Report" from the post/account menus. When writing a report, include context, and reference policy concerns when needed. Community conduct standards are in <Link className="font-semibold text-cyan-200 underline" to="/rules">Server Rules</Link>.</p>,
-  },
-  {
-    q: 'How do I report content in Element?',
-    a: <p>Use message/user actions to report, then provide room links/timestamps to moderators if needed. Enforcement references <Link className="font-semibold text-cyan-200 underline" to="/rules">Server Rules</Link> and <Link className="font-semibold text-cyan-200 underline" to="/terms">Terms of Use</Link>.</p>,
-  },
-  {
-    q: 'How do I report content in TeamSpeak?',
-    a: <p>Report to server admins/moderators with usernames, channel details, and time of incident. Behavioral expectations are described in the <Link className="font-semibold text-cyan-200 underline" to="/rules">Server Rules</Link>.</p>,
-  },
-  {
-    q: 'How do I ignore users in Element?',
-    a: <p>Click on the profile picture of the person you wish to ignore to open their user profile menu and select "ignore". This hides all their messages from you and reduces unwanted contact. For persistent harassment, report using moderation flows and the Rules/Terms pages.</p>,
-  },
-  {
-    q: 'How do I ignore users in Mastodon?',
-    a: <p>Use Mute for softer filtering or Block for stronger prevention. If someone&apos;s behavior violates policy, submit a report which references applicable <Link className="font-semibold text-cyan-200 underline" to="/rules">Rules</Link>.</p>,
-  },
-  {
-    q: 'How do notifications work in Element?',
-    a: <p>You can configure notification settings globally and for each individual room.
-	If you don&apos;t want to mute a room completely,
-	you can configure it to only notify you when you are mentioned or set up other custom rules.
-	Tune noisy rooms first so onboarding rooms stay useful.</p>,
-  },
-  {
-    q: 'Do files stay forever?',
-    a: <p>Do not assume indefinite retention. Storage and retention are best-effort but may vary by policy, server operations, and federation behavior. See the <Link className="font-semibold text-cyan-200 underline" to="/privacy">Privacy Policy</Link> and <Link className="font-semibold text-cyan-200 underline" to="/terms">Terms of Use</Link>.</p>,
-  },
-  {
-    q: 'How is moderation handled?',
-    a: <p>Moderation is best-effort with tools like Draupnir plus admin review. Actions can include content removal or account restrictions. Community expectations live in <Link className="font-semibold text-cyan-200 underline" to="/rules">Server Rules</Link>; enforcement and account obligations are in <Link className="font-semibold text-cyan-200 underline" to="/terms">Terms</Link>.</p>,
-  },
+  { q: 'What are Matrix IDs and display names?', a: <p>Your permanent Matrix ID (MXID) looks like <code>@name:ckconflux.com</code> and identifies you across federation. A display name is the changeable name people see in rooms and is not a unique account identifier.</p> },
+  { q: 'How do DMs, rooms, and Spaces differ?', a: <p>A direct message is a room intended for a smaller conversation. Rooms hold conversations and membership; their visibility, permissions, and encryption can differ. Spaces organize related rooms without replacing the rooms themselves.</p> },
+  { q: 'How do notifications work?', a: <p>Configure notifications globally and per room. For a busy room, choose mentions-only or another available level rather than muting everything. Client options can differ.</p> },
+  { q: 'Can I use another Matrix client?', a: <p>Yes. Matrix is an open protocol and compatible clients can use your account. CK Conflux recommends Element on the web/desktop and Element X on iOS and Android; features, encryption support, calls, and setup can vary in other clients.</p> },
+  { q: 'How do Element Call, MatrixRTC, and screen sharing fit together?', a: <p>Element Call is the primary voice/video experience linked from Matrix rooms, and MatrixRTC is the underlying Matrix calling technology. Screen sharing is available from supported clients and browsers; permissions and device support can affect it. See <Link className="font-semibold text-cyan-200 underline" to="/calls">Element Call</Link>.</p> },
+  { q: 'How does federation work?', a: <p>Your CK Conflux MXID can join compatible federated rooms when room and server policies allow. Participating homeservers exchange the data required for the room, and CK Conflux does not control third-party servers.</p> },
+  { q: 'How do I report, ignore, or block someone?', a: <p>Open the message or user actions in your client to report, ignore, or block. Include room links, timestamps, and relevant context in a report. Blocking or ignoring changes your experience; reporting asks moderators to review conduct under the <Link className="font-semibold text-cyan-200 underline" to="/rules">Rules</Link>. Encrypted reports may require you to provide the content moderators need.</p> },
+  { q: 'Do messages and media stay forever?', a: <p>Do not assume indefinite retention. Storage and retention vary by service, room, account state, operations, and federation. Encrypted Matrix media may be stored as ciphertext; this does not mean the server can scan every upload in plaintext. See <Link className="font-semibold text-cyan-200 underline" to="/privacy">Privacy</Link>.</p> },
+  { q: 'How do registration codes work?', a: <p>Share a registration code privately, outside Element. A friend enters it during registration. Codes may be revoked for abuse, spam, or policy violations. Existing members or a supported tier at <a className="font-semibold text-cyan-200 underline" href="https://buymeacoffee.com/conflux">Buy Me a Coffee</a> may provide a token.</p> },
+  { q: 'What about Mastodon or TeamSpeak support?', a: <p>Mastodon reports use the post or account report menu; mute and block are also available. TeamSpeak is a separate beta service: provide admins the username, channel, and incident time when reporting. Its identity and recovery are separate from Matrix. See the <Link className="font-semibold text-cyan-200 underline" to="/teamspeak">TeamSpeak page</Link>.</p> },
 ];
 
 export default function HelpPage() {
-  return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <header className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200 sm:text-sm">Help center</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Matrix onboarding, FAQ, and support resources</h1>
-      </header>
+  return <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    <header className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200 sm:text-sm">Help center</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Matrix onboarding, FAQ, and support resources</h1><p className="mt-4 text-lg leading-8 text-slate-300">Start safely with Element, then find everyday Matrix and moderation guidance.</p></header>
 
-      <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h2 className="text-xl font-semibold text-white">Policies & Rules</h2>
-        <p className="mt-2 text-sm text-slate-300">For account obligations, moderation expectations, and data handling:</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link to="/terms" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Terms of Use</Link>
-          <Link to="/rules" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Server Rules</Link>
-          <Link to="/privacy" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Privacy Policy</Link>
-        </div>
-      </section>
+    <section className="mt-8"><h2 className="text-2xl font-semibold text-white">Get started with Element</h2><ol className="mt-4 grid gap-4 md:grid-cols-2">
+      {[
+        ['Create and identify your account', <>Register in Element, verify your recovery/contact email where requested, and note your permanent MXID. Your display name can change; your MXID is how others reliably find you.</>],
+        ['Configure secure backup', <>Open Element’s security settings and enable secure backup for encryption keys. This is separate from verifying an email address.</>],
+        ['Store your recovery key safely', <>Save the recovery key somewhere safe and separate from your main device. CK Conflux cannot recreate it for you.</>],
+        ['Verify devices and sessions', <>Verify a new session with an existing trusted device or recovery method. Review sessions and remove any you do not recognize.</>],
+      ].map(([title, copy], i) => <li key={title} className="rounded-2xl border border-white/10 bg-white/5 p-5"><span className="text-xs font-semibold text-cyan-200">STEP {i + 1}</span><h3 className="mt-2 font-semibold text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-300">{copy}</p></li>)}
+    </ol><div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] p-5"><h3 className="font-semibold text-white">Signing in on a new device</h3><p className="mt-2 text-sm leading-6 text-slate-300">Signing in proves access to the account, but the new device still needs encryption keys. Verify it and restore from secure backup or another verified device. Without the keys, older encrypted messages may remain unreadable.</p><Link className="mt-3 inline-flex font-semibold text-cyan-200 underline" to="/security">Read Security &amp; recovery</Link></div></section>
 
-      <section className="mt-8 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-5">
-        <h2 className="text-xl font-semibold text-white">Membership & storage help</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-300">Read the <Link className="font-semibold text-cyan-200 underline" to="/membership">membership and storage overview</Link>, or use <a className="font-semibold text-cyan-200 underline" href={ACCOUNT_PORTAL_URL}>My Account</a> for your own storage, entitlement, and account administration.</p>
-      </section>
+    <section className="mt-10 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-5"><h2 className="text-xl font-semibold text-white">Membership &amp; storage help</h2><p className="mt-2 text-sm leading-6 text-slate-300">Read the <Link className="font-semibold text-cyan-200 underline" to="/membership">membership and storage overview</Link>, or use <a className="font-semibold text-cyan-200 underline" href={ACCOUNT_PORTAL_URL}>My Account</a> for your own storage, entitlement, and account administration.</p></section>
 
-      <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h2 className="text-xl font-semibold text-white">Official docs and ecosystem links</h2>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300">
-          <li>Official Element FAQ: <a className="font-semibold text-cyan-200 underline" href="https://docs.element.io/latest/element-support/frequently-asked-questions/">docs.element.io</a></li>
-          <li>Matrix clients directory: <a className="font-semibold text-cyan-200 underline" href="https://matrix.org/ecosystem/clients/">matrix.org/ecosystem/clients</a></li>
-          <li>Room discovery: <a className="font-semibold text-cyan-200 underline" href="https://matrixrooms.info/">matrixrooms.info</a></li>
-          <li>Optional paid client with built-in bridges/integrations: <a className="font-semibold text-cyan-200 underline" href="https://www.beeper.com/">Beeper</a></li>
-        </ul>
-        <p className="mt-3 text-sm text-slate-300">Matrix is open-standard: you are not locked to one app. Recommended: Element X on mobile and element.ckconflux.com on web. Bridging is allowed on this server, and you can request additional bridges from admins.</p>
-      </section>
+    <section className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-5"><h2 className="text-xl font-semibold text-white">Official guides and next steps</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300"><li><a className="font-semibold text-cyan-200 underline" href="https://docs.element.io/latest/element-support/frequently-asked-questions/">Official Element FAQ</a></li><li><a className="font-semibold text-cyan-200 underline" href="https://matrix.org/ecosystem/clients/">Matrix client directory</a></li><li><Link className="font-semibold text-cyan-200 underline" to="/support">Intent-based support routes</Link></li></ul></section>
 
-      <section className="mt-8">
-        <h2 className="text-2xl font-semibold text-white">FAQ</h2>
-        <div className="mt-4 space-y-3">
-          {faqItems.map((item, index) => (
-            <AccordionItem key={item.q} title={item.q} defaultOpen={index === 0}>
-              {item.a}
-            </AccordionItem>
-          ))}
-        </div>
-      </section>
-    </section>
-  );
+    <section className="mt-10"><h2 className="text-2xl font-semibold text-white">Everyday questions</h2><div className="mt-4 space-y-3">{faqItems.map((item, index) => <AccordionItem key={item.q} title={item.q} defaultOpen={index === 0}>{item.a}</AccordionItem>)}</div></section>
+    <section className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-5"><h2 className="text-xl font-semibold text-white">Policies</h2><div className="mt-3 flex flex-wrap gap-3">{[['Terms','/terms'],['Rules','/rules'],['Privacy','/privacy'],['Support','/support']].map(([label,to]) => <Link key={to} to={to} className="rounded-lg border border-white/15 px-3 py-2 font-semibold text-white">{label}</Link>)}</div></section>
+  </section>;
 }
