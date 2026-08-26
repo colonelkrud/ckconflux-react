@@ -14,7 +14,7 @@ export default function MobileNavigation({ links }) {
     document.addEventListener('pointerdown', closeOutside);
     return () => { document.removeEventListener('keydown', closeOnEscape); document.removeEventListener('pointerdown', closeOutside); };
   }, [open]);
-  return <div className="relative md:hidden" ref={containerRef}>
+  return <div className="relative lg:hidden" ref={containerRef}>
     <button type="button" aria-expanded={open} aria-controls={id} aria-label={open ? 'Close navigation menu' : 'Open navigation menu'} onClick={() => setOpen((value) => !value)} className="rounded-lg p-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">
       {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
     </button>
