@@ -16,8 +16,16 @@ const descriptions = {
   '/rules': 'Read the CK Conflux community server rules.',
 };
 const labels = {'/':'Home','/why-ck-conflux':'Why CK Conflux','/matrix':'Matrix','/calls':'Calls','/membership':'Membership','/security':'Security','/privacy':'Privacy Policy','/status':'Status','/help':'Help','/support':'Support','/teamspeak':'TeamSpeak','/terms':'Terms of Use','/rules':'Server Rules'};
+
+export const ROUTE_PATHS = Object.freeze(Object.keys(labels));
+
 export function getPageMetadata(pathname) {
   const known = Object.hasOwn(labels, pathname);
   const title = known && pathname === '/' ? 'CK Conflux' : `${known ? labels[pathname] : 'Page Not Found'} | CK Conflux`;
-  return { title, description: known ? descriptions[pathname] : 'The requested CK Conflux page could not be found.', url: `${SITE_URL}${known ? pathname : window.location.pathname}` };
+  return {
+    title,
+    description: known ? descriptions[pathname] : 'The requested CK Conflux page could not be found.',
+    url: `${SITE_URL}${pathname}`,
+    known,
+  };
 }
