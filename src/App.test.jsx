@@ -1,16 +1,19 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
 const renderPath = (path) => { window.history.pushState({}, '', path); return render(<App />); };
-afterEach(() => { document.title = ''; document.head.querySelectorAll('link[rel="canonical"], meta[property^="og:"], meta[name^="twitter:"]').forEach((node) => node.remove()); });
+beforeEach(() => { vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {}))); });
+afterEach(() => { vi.unstubAllGlobals(); document.title = ''; document.head.querySelectorAll('link[rel="canonical"], meta[property^="og:"], meta[name^="twitter:"]').forEach((node) => node.remove()); });
 
 describe('CK Conflux application architecture', () => {
-  it('renders Home and its preserved onboarding content', () => {
+  it('renders the compact promotional Home and primary destinations', () => {
     renderPath('/');
-    expect(screen.getByRole('heading', { name: /Private community chat and calls/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Open Help Center/i })).toHaveAttribute('href', '/help');
-    expect(screen.getByRole('link', { name: 'Explore Element Call' })).toHaveAttribute('href', '/calls');
+    expect(screen.getByRole('heading', { name: /Private community chat, secure messaging/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Open Element' })[1]).toHaveAttribute('href', 'https://element.ckconflux.com');
+    expect(screen.getByRole('link', { name: 'Create Account' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/register');
+    expect(screen.getByRole('link', { name: /Explore Element Call/i })).toHaveAttribute('href', '/calls');
+    expect(document.querySelector('#main-content')).not.toHaveTextContent('TeamSpeak');
   });
 
   it.each([
@@ -34,7 +37,7 @@ describe('CK Conflux application architecture', () => {
     const nav = screen.getByRole('navigation', { name: 'Primary navigation' });
     expect(nav).toHaveTextContent('Why CK Conflux'); expect(nav).toHaveTextContent('Matrix'); expect(nav).toHaveTextContent('Calls'); expect(nav).toHaveTextContent('Help');
     expect(screen.getAllByRole('link', { name: 'My Account' })[0]).toHaveAttribute('href', 'https://account.ckconflux.com');
-    expect(screen.getByRole('link', { name: 'Open Element' })).toHaveAttribute('href', 'https://element.ckconflux.com');
+    expect(screen.getAllByRole('link', { name: 'Open Element' })[0]).toHaveAttribute('href', 'https://element.ckconflux.com');
   });
 
   it('opens and closes the accessible mobile navigation', () => {
@@ -79,21 +82,21 @@ describe('CK Conflux application architecture', () => {
 
   it('uses client navigation and responds to browser history events', () => {
     renderPath('/');
-    fireEvent.click(screen.getByRole('link', { name: 'Open Help Center' }));
-    expect(window.location.pathname).toBe('/help');
-    expect(screen.getByRole('heading', { name: /Matrix onboarding/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', { name: /Explore Matrix and Element/i }));
+    expect(window.location.pathname).toBe('/matrix');
+    expect(screen.getByRole('heading', { name: /Open communication/i })).toBeInTheDocument();
     act(() => { window.history.pushState({}, '', '/rules'); window.dispatchEvent(new PopStateEvent('popstate')); });
     expect(screen.getByRole('heading', { name: 'Server Rules' })).toBeInTheDocument();
   });
 
   it('preserves initial focus and moves focus after client navigation', () => {
     renderPath('/');
-    const homeHeading = screen.getByRole('heading', { name: /Private community chat and calls/i });
+    const homeHeading = screen.getByRole('heading', { name: /Private community chat, secure messaging/i });
     expect(homeHeading).not.toHaveFocus();
-    fireEvent.click(screen.getByRole('link', { name: /Open Help Center/i }));
-    const helpHeading = screen.getByRole('heading', { name: /Matrix onboarding/i });
-    expect(helpHeading).toHaveFocus();
-    expect(helpHeading).toHaveAttribute('tabindex', '-1');
+    fireEvent.click(screen.getByRole('link', { name: /Explore Matrix and Element/i }));
+    const matrixHeading = screen.getByRole('heading', { name: /Open communication/i });
+    expect(matrixHeading).toHaveFocus();
+    expect(matrixHeading).toHaveAttribute('tabindex', '-1');
   });
 
   it('updates title, canonical, Open Graph, and social metadata', async () => {
@@ -185,6 +188,38 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('heading', { name: 'Lost encrypted history or recovery' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Harassment or abuse' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Independent status page' })).toHaveAttribute('href', 'https://status.ckconflux.com');
+  });
+
+  it('renders successful component status and its generation time', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ generated_at: '2026-08-26T12:00:00Z', components: { website: 'healthy', authentication: 'up', matrix: 'operational', media: 'ok', calls: 'available', membership: 'passing' } }) });
+    renderPath('/status');
+    expect(await screen.findByText('Overall: Operational')).toBeInTheDocument();
+    expect(screen.getByText('Matrix messaging')).toBeInTheDocument();
+    expect(screen.getByText('Voice / video calls')).toBeInTheDocument();
+    expect(screen.getByText(/Status payload updated:/)).toBeInTheDocument();
+  });
+
+  it('renders degraded status without claiming all systems operational', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ components: { website: 'operational', matrix: 'degraded' } }) });
+    renderPath('/');
+    expect(await screen.findByText('Some systems are degraded')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('All systems operational');
+  });
+
+  it.each([
+    ['failed request', () => Promise.reject(new Error('offline'))],
+    ['malformed response', () => Promise.resolve({ ok: true, json: async () => ({ message: 'no component data' }) })],
+  ])('shows unknown status for a %s', async (_name, response) => {
+    fetch.mockImplementation(response);
+    renderPath('/status');
+    expect(await screen.findByRole('heading', { name: 'Local status unavailable / unknown' })).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('All systems operational');
+  });
+
+  it('prominently links the authoritative independent status host', () => {
+    renderPath('/status');
+    expect(screen.getByRole('link', { name: 'Open independent status page' })).toHaveAttribute('href', 'https://status.ckconflux.com');
+    expect(document.body).not.toHaveTextContent('status.colonelkrud.com');
   });
 
   it('preserves a reduced-motion override and observes the preference', () => {

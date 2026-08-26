@@ -1,5 +1,5 @@
 export const SITE_URL = 'https://ckconflux.com';
-const summary = 'Private, community-run communication with Matrix, Element, and secure calls.';
+const summary = 'Private community chat and secure messaging with Element on Matrix, plus voice and video calls through MatrixRTC—free, federated, decentralized communication with end-to-end encryption.';
 const descriptions = {
   '/': summary,
   '/why-ck-conflux': 'Learn why CK Conflux offers community communication without platform lock-in.',
