@@ -11,16 +11,16 @@ import NotFound from '../pages/NotFound';
 import Matrix from '../pages/Matrix';
 import Calls from '../pages/Calls';
 import TeamSpeak from '../pages/TeamSpeak';
+import WhyCKConflux from '../pages/WhyCKConflux';
+import Security from '../pages/Security';
+import Support from '../pages/Support';
 import { useRouter } from './Router';
 
 const plannedRoutes = {
-  '/why-ck-conflux': ['About CK Conflux', 'Why CK Conflux', 'A community-run home for private conversations, built on open standards without platform lock-in.'],
   '/membership': ['Community', 'Membership', 'Membership information and onboarding details will be expanded in a focused follow-up.'],
-  '/security': ['Trust', 'Security', 'An overview of the practices used to protect CK Conflux accounts and services.'],
-  '/status': ['Availability', 'Service status', 'View current service availability and incident updates.', {label:'Open status page',to:'https://status.colonelkrud.com',external:true}],
-  '/support': ['Contribute', 'Support CK Conflux', 'Ways to help sustain community infrastructure will be detailed here.'],
+  '/status': ['Availability', 'Service status', 'View current service availability and incident updates.', {label:'Open status page',to:'https://status.ckconflux.com',external:true}],
 };
-const routes = {'/': <Home />, '/matrix': <Matrix />, '/calls': <Calls />, '/teamspeak': <TeamSpeak />, '/help': <Help />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
+const routes = {'/': <Home />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/teamspeak': <TeamSpeak />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
 
 export default function AppRouter() {
   const { pathname, navigationKey } = useRouter();

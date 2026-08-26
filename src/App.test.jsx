@@ -15,8 +15,8 @@ describe('CK Conflux application architecture', () => {
 
   it.each([
     ['/why-ck-conflux', 'Why CK Conflux'], ['/matrix', 'Open communication, with a community you know'], ['/calls', 'Element Call'],
-    ['/membership', 'Membership'], ['/security', 'Security'], ['/privacy', 'Privacy Policy'], ['/status', 'Service status'],
-    ['/help', 'Matrix onboarding, FAQ, and support resources'], ['/support', 'Support CK Conflux'], ['/teamspeak', 'TeamSpeak 6 Beta'],
+    ['/membership', 'Membership'], ['/security', 'Security'], ['/privacy', 'CK Conflux Privacy Model'], ['/status', 'Service status'],
+    ['/help', 'Matrix onboarding, FAQ, and support resources'], ['/support', 'Support'], ['/teamspeak', 'TeamSpeak 6 Beta'],
     ['/terms', 'CK Conflux Terms of Use'], ['/rules', 'Server Rules'],
   ])('directly renders the %s route', (path, heading) => {
     renderPath(path);
@@ -113,11 +113,49 @@ describe('CK Conflux application architecture', () => {
   });
 
   it('does not market Foundry VTT', () => {
-    for (const path of ['/', '/matrix', '/calls', '/teamspeak']) {
+    for (const path of ['/', '/why-ck-conflux', '/matrix', '/calls', '/teamspeak', '/privacy', '/security', '/help', '/support']) {
       const view = renderPath(path);
       expect(document.body).not.toHaveTextContent(/Foundry VTT/i);
       view.unmount();
     }
+  });
+
+  it('explains federation and the CK Conflux privacy commitments', () => {
+    renderPath('/why-ck-conflux');
+    expect(screen.getByText(/community-operated Matrix homeserver and community/i)).toBeInTheDocument();
+    expect(screen.getByText(/does not sell user personal information/i)).toBeInTheDocument();
+    expect(screen.getByText(/does not use users’ private conversations or content to train AI models/i)).toBeInTheDocument();
+    expect(screen.getByText(/does not display advertising/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'How Matrix works' })).toHaveAttribute('href', '/matrix');
+  });
+
+  it('presents a service-wide privacy model without blanket media scanning', () => {
+    renderPath('/privacy');
+    expect(screen.getByRole('heading', { name: 'CK Conflux Privacy Model' })).toBeInTheDocument();
+    expect(document.body).toHaveTextContent(/Matrix.*Mastodon.*TeamSpeak/s);
+    expect(document.body).not.toHaveTextContent('All uploaded content is scanned');
+  });
+
+  it('does not claim encrypted Matrix media is universally scanned', () => {
+    renderPath('/rules');
+    expect(document.body).not.toHaveTextContent('All uploaded content is scanned');
+    expect(document.body).toHaveTextContent(/encrypted Matrix media may be stored only as ciphertext/i);
+  });
+
+  it('covers recovery keys and device verification in Security and Help', () => {
+    for (const path of ['/security', '/help']) {
+      const view = renderPath(path);
+      expect(document.body).toHaveTextContent(/recovery key/i);
+      expect(document.body).toHaveTextContent(/verify.*device|device.*verif/i);
+      view.unmount();
+    }
+  });
+
+  it('routes support intents and exposes the independent status link', () => {
+    renderPath('/support');
+    expect(screen.getByRole('heading', { name: 'Lost encrypted history or recovery' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Harassment or abuse' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Independent status page' })).toHaveAttribute('href', 'https://status.ckconflux.com');
   });
 
   it('preserves a reduced-motion override and observes the preference', () => {
