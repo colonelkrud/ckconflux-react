@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { Link } from '../router/Router';
+import { ACCOUNT_PORTAL_URL } from '../config/community';
 
 function AccordionItem({ title, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -115,6 +116,11 @@ export default function HelpPage() {
           <Link to="/rules" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Server Rules</Link>
           <Link to="/privacy" className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Privacy Policy</Link>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-5">
+        <h2 className="text-xl font-semibold text-white">Membership & storage help</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-300">Read the <Link className="font-semibold text-cyan-200 underline" to="/membership">membership and storage overview</Link>, or use <a className="font-semibold text-cyan-200 underline" href={ACCOUNT_PORTAL_URL}>My Account</a> for your own storage, entitlement, and account administration.</p>
       </section>
 
       <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
