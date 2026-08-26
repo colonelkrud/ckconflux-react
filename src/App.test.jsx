@@ -33,7 +33,7 @@ describe('CK Conflux application architecture', () => {
     renderPath('/');
     const nav = screen.getByRole('navigation', { name: 'Primary navigation' });
     expect(nav).toHaveTextContent('Why CK Conflux'); expect(nav).toHaveTextContent('Matrix'); expect(nav).toHaveTextContent('Calls'); expect(nav).toHaveTextContent('Help');
-    expect(screen.getByRole('link', { name: 'My Account' })).toHaveAttribute('href', 'https://account.ckconflux.com');
+    expect(screen.getAllByRole('link', { name: 'My Account' })[0]).toHaveAttribute('href', 'https://account.ckconflux.com');
     expect(screen.getByRole('link', { name: 'Open Element' })).toHaveAttribute('href', 'https://element.ckconflux.com');
   });
 
@@ -44,8 +44,37 @@ describe('CK Conflux application architecture', () => {
     fireEvent.click(button);
     expect(screen.getByRole('button', { name: 'Close navigation menu' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('navigation', { name: 'Mobile navigation' })).toBeVisible();
+    expect(screen.getByRole('navigation', { name: 'Mobile navigation' }).querySelector('a[href="https://account.ckconflux.com"]')).toHaveTextContent('My Account');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('explains free community membership and the illustrative storage allowance', () => {
+    renderPath('/membership');
+    expect(screen.getByRole('heading', { name: /Communication is for the community/i })).toBeInTheDocument();
+    expect(screen.getByText(/Critical messaging, calls, and community participation remain free/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '10 GiB of media storage' })).toBeInTheDocument();
+    expect(screen.getByText('10,737,418,240 bytes')).toBeInTheDocument();
+    expect(screen.getByText(/roughly 1 MB per photo/i)).toHaveTextContent(/on the order of 10,000 photos/);
+    expect(screen.getByText(/This is only an illustration/i).closest('p')).toHaveTextContent(/resolution, compression, format, device, and quality settings/);
+    expect(document.body).not.toHaveTextContent(/unlock essential messaging|paid-only messaging|premium messaging/i);
+  });
+
+  it('keeps My Account distinct from Element throughout the membership flow', () => {
+    renderPath('/membership');
+    const accountLinks = screen.getAllByRole('link', { name: /My Account/i });
+    expect(accountLinks.some((link) => link.getAttribute('href') === 'https://account.ckconflux.com')).toBe(true);
+    expect(screen.getByText(/Membership, storage, and account administration/)).toBeInTheDocument();
+    expect(screen.getByText(/Messaging, community rooms, and calls/)).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Open Element' }).some((link) => link.getAttribute('href') === 'https://element.ckconflux.com')).toBe(true);
+  });
+
+  it('does not request authenticated account state from the public membership page', () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    renderPath('/membership');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(screen.getByText(/public site does not retrieve them/i)).toBeInTheDocument();
+    fetchSpy.mockRestore();
   });
 
   it('uses client navigation and responds to browser history events', () => {

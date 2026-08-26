@@ -5,7 +5,7 @@ const descriptions = {
   '/why-ck-conflux': 'Learn why CK Conflux offers community communication without platform lock-in.',
   '/matrix': 'Understand Matrix, CK Conflux, Element, federation, rooms, Spaces, and your Matrix ID.',
   '/calls': 'Use Element Call for Matrix-integrated voice, video, and screen sharing powered by MatrixRTC.',
-  '/membership': 'Learn how CK Conflux membership works.',
+  '/membership': 'Learn about free community communication, included media storage, voluntary support, and account administration at CK Conflux.',
   '/security': 'Learn about Matrix encryption, secure backup, recovery keys, device verification, and federation boundaries.',
   '/privacy': 'Understand the CK Conflux-wide privacy model and service-specific data practices.',
   '/status': 'Find CK Conflux service status information.',

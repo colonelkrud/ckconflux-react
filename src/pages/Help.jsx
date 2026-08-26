@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { Link } from '../router/Router';
+import { ACCOUNT_PORTAL_URL } from '../config/community';
 
 function AccordionItem({ title, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -62,6 +63,8 @@ export default function HelpPage() {
         ['Verify devices and sessions', <>Verify a new session with an existing trusted device or recovery method. Review sessions and remove any you do not recognize.</>],
       ].map(([title, copy], i) => <li key={title} className="rounded-2xl border border-white/10 bg-white/5 p-5"><span className="text-xs font-semibold text-cyan-200">STEP {i + 1}</span><h3 className="mt-2 font-semibold text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-300">{copy}</p></li>)}
     </ol><div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] p-5"><h3 className="font-semibold text-white">Signing in on a new device</h3><p className="mt-2 text-sm leading-6 text-slate-300">Signing in proves access to the account, but the new device still needs encryption keys. Verify it and restore from secure backup or another verified device. Without the keys, older encrypted messages may remain unreadable.</p><Link className="mt-3 inline-flex font-semibold text-cyan-200 underline" to="/security">Read Security &amp; recovery</Link></div></section>
+
+    <section className="mt-10 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-5"><h2 className="text-xl font-semibold text-white">Membership &amp; storage help</h2><p className="mt-2 text-sm leading-6 text-slate-300">Read the <Link className="font-semibold text-cyan-200 underline" to="/membership">membership and storage overview</Link>, or use <a className="font-semibold text-cyan-200 underline" href={ACCOUNT_PORTAL_URL}>My Account</a> for your own storage, entitlement, and account administration.</p></section>
 
     <section className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-5"><h2 className="text-xl font-semibold text-white">Official guides and next steps</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300"><li><a className="font-semibold text-cyan-200 underline" href="https://docs.element.io/latest/element-support/frequently-asked-questions/">Official Element FAQ</a></li><li><a className="font-semibold text-cyan-200 underline" href="https://matrix.org/ecosystem/clients/">Matrix client directory</a></li><li><Link className="font-semibold text-cyan-200 underline" to="/support">Intent-based support routes</Link></li></ul></section>
 

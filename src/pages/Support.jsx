@@ -1,3 +1,4 @@
+import { ACCOUNT_PORTAL_URL } from '../config/community';
 import { Link } from '../router/Router';
 
 const routes = [
@@ -7,7 +8,7 @@ const routes = [
   ['Harassment or abuse', 'Use report, ignore, or block in your client. Include useful context when reporting; encrypted content may require you to submit the relevant evidence.', <><Link className="font-semibold text-cyan-200 underline" to="/help">Reporting steps</Link><span> · </span><a className="font-semibold text-cyan-200 underline" href="mailto:abuse@mg.colonelkrud.com">Email abuse</a></>],
   ['Privacy or data request', 'Request access or deletion through the published privacy contact and review service-specific retention first.', <><Link className="font-semibold text-cyan-200 underline" to="/privacy">Privacy model</Link><span> · </span><a className="font-semibold text-cyan-200 underline" href="mailto:admin@colonelkrud.com">Privacy contact</a></>],
   ['Service outage', 'Check current availability and incident information independently of this site.', <><Link className="font-semibold text-cyan-200 underline" to="/status">Status route</Link><span> · </span><a className="font-semibold text-cyan-200 underline" href="https://status.ckconflux.com">Independent status page</a></>],
-  ['Membership or storage', 'Review membership and capacity information, then manage available account options in My Account.', <><Link className="font-semibold text-cyan-200 underline" to="/membership">Membership</Link><span> · </span><a className="font-semibold text-cyan-200 underline" href="https://account.ckconflux.com">My Account</a></>],
+  ['Membership or storage', 'Review membership and capacity information, then manage available account options in My Account.', <><Link className="font-semibold text-cyan-200 underline" to="/membership">Membership</Link><span> · </span><a className="font-semibold text-cyan-200 underline" href={ACCOUNT_PORTAL_URL}>My Account</a></>],
 ];
 
 export default function SupportPage() {
