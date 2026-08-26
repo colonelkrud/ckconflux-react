@@ -13,6 +13,13 @@ const infrastructure = [
   [Globe2, 'Domains & related infrastructure'],
 ];
 
+const ILLUSTRATIVE_PHOTO_BYTES = 1024 ** 2;
+const PHOTO_COUNT_ROUNDING = 1000;
+const illustrativePhotoCount = Math.round(
+  COMMUNITY_MEDIA_QUOTA.bytes / ILLUSTRATIVE_PHOTO_BYTES / PHOTO_COUNT_ROUNDING,
+) * PHOTO_COUNT_ROUNDING;
+const illustrativePhotosPerDay = Math.round(illustrativePhotoCount / 365);
+
 export default function Membership() {
   return <>
     <section className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.2fr_.8fr] lg:px-8 lg:py-20">
@@ -52,7 +59,7 @@ export default function Membership() {
         <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Included community capacity</p>
         <h2 className="mt-3 text-3xl font-semibold text-white">{COMMUNITY_MEDIA_QUOTA.gibibytes} GiB of media storage</h2>
         <p className="mt-2 font-mono text-sm text-slate-400">{COMMUNITY_MEDIA_QUOTA.bytes.toLocaleString('en-US')} bytes</p>
-        <p className="mt-5 leading-7 text-slate-300">At roughly 1 MB per photo, 10 GiB is on the order of 10,000 photos, or about 27 photos per day for a year.</p>
+        <p className="mt-5 leading-7 text-slate-300">At roughly 1 MB per photo, {COMMUNITY_MEDIA_QUOTA.gibibytes} GiB is on the order of {illustrativePhotoCount.toLocaleString('en-US')} photos, or about {illustrativePhotosPerDay.toLocaleString('en-US')} photos per day for a year.</p>
         <p className="mt-4 rounded-xl border border-amber-200/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50"><strong>This is only an illustration.</strong> Actual image sizes vary substantially with resolution, compression, format, device, and quality settings. It is not a guaranteed file count, and quotas may change as the service evolves.</p>
       </div>
       <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
