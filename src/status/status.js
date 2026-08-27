@@ -42,10 +42,12 @@ function componentName(key) {
 export function parseStatus(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
   const source = payload.components ?? payload.services ?? payload.checks;
+  const hasComponentContainer = Array.isArray(source) || (source && typeof source === 'object');
   const entries = Array.isArray(source)
     ? source.map((item) => [item?.name ?? item?.component ?? item?.id, item])
     : source && typeof source === 'object' ? Object.entries(source) : Object.entries(payload);
   const components = entries.map(([key, value]) => ({ name: componentName(key), state: healthState(value) }));
+  if (!hasComponentContainer && components.every(({ state }) => state === 'unknown')) return null;
   const unique = [...new Map(components.map((component) => [component.name, component])).values()];
   if (!unique.length) return null;
   const generatedAt = payload.generatedAt ?? payload.generated_at ?? payload.updatedAt ?? payload.updated_at ?? payload.timestamp ?? null;
