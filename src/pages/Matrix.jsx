@@ -16,7 +16,7 @@ export default function MatrixPage() {
         <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">Open communication, with a community you know</h1>
         <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">Matrix is an open, federated communication protocol and network. CK Conflux is the community-operated Matrix homeserver and community you can join. Element is our recommended app for using it.</p>
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <a href="https://element.ckconflux.com/#/register" className="rounded-xl bg-cyan-400 px-5 py-3 text-center font-semibold text-slate-950">Create Account</a>
+          <Link to="/join" className="rounded-xl bg-cyan-400 px-5 py-3 text-center font-semibold text-slate-950">Create Account</Link>
           <a href="https://element.ckconflux.com" className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-center font-semibold text-white">Open Element</a>
           <Link to="/calls" className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-center font-semibold text-white">Calls</Link>
         </div>

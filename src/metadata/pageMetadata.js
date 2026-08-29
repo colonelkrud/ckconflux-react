@@ -2,6 +2,7 @@ export const SITE_URL = 'https://ckconflux.com';
 const summary = 'Private community chat and secure messaging with Element on Matrix, plus voice and video calls through MatrixRTC—free, federated, decentralized communication with end-to-end encryption.';
 const descriptions = {
   '/': summary,
+  '/join': 'Learn who can join CK Conflux, how to get a registration token, and how to create and secure your Matrix account.',
   '/why-ck-conflux': 'Learn why CK Conflux offers community communication without platform lock-in.',
   '/matrix': 'Understand Matrix, CK Conflux, Element, federation, rooms, Spaces, and your Matrix ID.',
   '/calls': 'Use Element Call for Matrix-integrated voice, video, and screen sharing powered by MatrixRTC.',
@@ -15,7 +16,7 @@ const descriptions = {
   '/terms': 'Read the CK Conflux terms of use.',
   '/rules': 'Read the CK Conflux community server rules.',
 };
-const labels = {'/':'Home','/why-ck-conflux':'Why CK Conflux','/matrix':'Matrix and Element','/calls':'Element Call','/membership':'Membership','/security':'Security','/privacy':'Privacy Policy','/status':'Status','/help':'Help','/support':'Support','/teamspeak':'TeamSpeak 6 Beta','/terms':'Terms of Use','/rules':'Server Rules'};
+const labels = {'/':'Home','/join':'Join CK Conflux','/why-ck-conflux':'Why CK Conflux','/matrix':'Matrix and Element','/calls':'Element Call','/membership':'Membership','/security':'Security','/privacy':'Privacy Policy','/status':'Status','/help':'Help','/support':'Support','/teamspeak':'TeamSpeak 6 Beta','/terms':'Terms of Use','/rules':'Server Rules'};
 
 export const ROUTE_PATHS = Object.freeze(Object.keys(labels));
 

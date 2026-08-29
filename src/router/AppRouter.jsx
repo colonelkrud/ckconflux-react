@@ -15,9 +15,10 @@ import WhyCKConflux from '../pages/WhyCKConflux';
 import Security from '../pages/Security';
 import Support from '../pages/Support';
 import Membership from '../pages/Membership';
+import Join from '../pages/Join';
 import { useRouter } from './Router';
 
-const routes = {'/': <Home />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
+const routes = {'/': <Home />, '/join': <Join />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
 
 export default function AppRouter() {
   const { pathname, navigationKey } = useRouter();

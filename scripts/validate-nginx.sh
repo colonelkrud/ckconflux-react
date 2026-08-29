@@ -72,6 +72,7 @@ assert_title() {
 wait_for_nginx
 assert_status / 200
 assert_status /help 200
+assert_status /join 200
 assert_status /privacy 200
 assert_redirect '/help.html?from=validation' '/help?from=validation'
 assert_redirect '/index.html?from=validation' '/?from=validation'
@@ -80,6 +81,7 @@ assert_redirect /index.html /
 assert_status /does-not-exist 404
 assert_status /404.html 404
 assert_title /help 'Help | CK Conflux'
+assert_title /join 'Join CK Conflux | CK Conflux'
 assert_title /privacy 'Privacy Policy | CK Conflux'
 
 echo "nginx route validation passed"
