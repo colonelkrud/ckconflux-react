@@ -27,5 +27,6 @@ export function getPageMetadata(pathname) {
     description: known ? descriptions[pathname] : 'The requested CK Conflux page could not be found.',
     url: `${SITE_URL}${pathname}`,
     known,
+    robots: known ? null : 'noindex, nofollow',
   };
 }

@@ -14,6 +14,9 @@ export default function Metadata({ pathname }) {
     for (const property of ['og:title','og:description','og:url']) upsertMeta(`meta[property="${property}"]`, 'property', property, property === 'og:title' ? metadata.title : property === 'og:description' ? metadata.description : metadata.url);
     for (const name of ['twitter:title','twitter:description']) upsertMeta(`meta[name="${name}"]`, 'name', name, name.endsWith('title') ? metadata.title : metadata.description);
     upsertMeta('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary');
+    const robots = document.head.querySelector('meta[name="robots"]');
+    if (metadata.robots) upsertMeta('meta[name="robots"]', 'name', 'robots', metadata.robots);
+    else robots?.remove();
     let canonical = document.head.querySelector('link[rel="canonical"]');
     if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.append(canonical); }
     canonical.href = metadata.url;

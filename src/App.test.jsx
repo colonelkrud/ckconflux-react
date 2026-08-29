@@ -4,7 +4,7 @@ import App from './App';
 
 const renderPath = (path) => { window.history.pushState({}, '', path); return render(<App />); };
 beforeEach(() => { vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {}))); });
-afterEach(() => { vi.unstubAllGlobals(); document.title = ''; document.head.querySelectorAll('link[rel="canonical"], meta[property^="og:"], meta[name^="twitter:"]').forEach((node) => node.remove()); });
+afterEach(() => { vi.unstubAllGlobals(); document.title = ''; document.head.querySelectorAll('link[rel="canonical"], meta[property^="og:"], meta[name^="twitter:"], meta[name="robots"]').forEach((node) => node.remove()); });
 
 describe('CK Conflux application architecture', () => {
   it('renders the compact promotional Home and primary destinations', () => {
@@ -101,6 +101,29 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('heading', { name: 'Server Rules' })).toBeInTheDocument();
   });
 
+  it('keeps an exact same-URL navigation as a no-op', () => {
+    renderPath('/');
+    const pushState = vi.spyOn(window.history, 'pushState');
+    fireEvent.click(screen.getByRole('link', { name: 'CK Conflux' }));
+    expect(pushState).not.toHaveBeenCalled();
+  });
+
+  it('clears a stale fragment when navigating to the current pathname and restores page focus', () => {
+    renderPath('/#signin');
+    fireEvent.click(screen.getByRole('link', { name: 'CK Conflux' }));
+    expect(window.location.pathname).toBe('/');
+    expect(window.location.hash).toBe('');
+    expect(screen.getByRole('heading', { name: /Private community chat/i })).toHaveFocus();
+  });
+
+  it('clears stale search state when navigating to the same pathname', () => {
+    renderPath('/help?source=old');
+    fireEvent.click(screen.getByRole('navigation', { name: 'Primary navigation' }).querySelector('a[href="/help"]'));
+    expect(window.location.pathname).toBe('/help');
+    expect(window.location.search).toBe('');
+    expect(screen.getByRole('heading', { name: /Matrix onboarding/i })).toHaveFocus();
+  });
+
   it('preserves initial focus and moves focus after client navigation', () => {
     renderPath('/');
     const homeHeading = screen.getByRole('heading', { name: /Private community chat, secure messaging/i });
@@ -117,6 +140,36 @@ describe('CK Conflux application architecture', () => {
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', 'https://ckconflux.com/security');
     expect(document.querySelector('meta[property="og:title"]')).toHaveAttribute('content', 'Security | CK Conflux');
     expect(document.querySelector('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary');
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', 'Learn about Matrix encryption, secure backup, recovery keys, device verification, and federation boundaries.');
+    expect(document.querySelector('meta[name="robots"]')).not.toBeInTheDocument();
+  });
+
+  it('removes a prerendered 404 robots directive on a valid route', async () => {
+    document.head.insertAdjacentHTML('beforeend', '<meta name="robots" content="noindex, nofollow">');
+    renderPath('/');
+    await waitFor(() => expect(document.querySelector('meta[name="robots"]')).not.toBeInTheDocument());
+  });
+
+  it('applies noindex metadata to an unknown route', async () => {
+    renderPath('/does-not-exist');
+    await waitFor(() => expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow'));
+    expect(document.title).toBe('Page Not Found | CK Conflux');
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', 'https://ckconflux.com/does-not-exist');
+  });
+
+  it('removes 404 robots metadata after client navigation to a valid route', async () => {
+    renderPath('/does-not-exist');
+    await waitFor(() => expect(document.querySelector('meta[name="robots"]')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('link', { name: 'CK Conflux' }));
+    await waitFor(() => expect(document.querySelector('meta[name="robots"]')).not.toBeInTheDocument());
+    expect(document.title).toBe('CK Conflux');
+  });
+
+  it('applies 404 robots metadata after client navigation to an unknown route', async () => {
+    renderPath('/help');
+    act(() => { window.history.pushState({}, '', '/missing'); window.dispatchEvent(new PopStateEvent('popstate')); });
+    await waitFor(() => expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow'));
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toHaveFocus();
   });
 
   it('distinguishes Matrix, CK Conflux, and Element for general users', () => {
@@ -154,6 +207,15 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('link', { name: 'Official TeamSpeak downloads' })).toHaveAttribute('href', 'https://www.teamspeak.com/en/downloads/');
     expect(screen.getByRole('link', { name: 'Explore Element Call' })).toHaveAttribute('href', '/calls');
     expect(screen.getByText(/identity and setup are separate/)).toBeInTheDocument();
+  });
+
+  it('exposes Mastodon as a secondary service from Help without changing primary navigation', () => {
+    renderPath('/help');
+    fireEvent.click(screen.getByRole('button', { name: /What about Mastodon or TeamSpeak support?/ }));
+    expect(screen.getByRole('link', { name: 'Open CK Conflux Mastodon' })).toHaveAttribute('href', 'https://masto.colonelkrud.com');
+    expect(screen.getByText(/secondary supported social service/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'TeamSpeak page' })).toHaveAttribute('href', '/teamspeak');
+    expect(screen.getByRole('navigation', { name: 'Primary navigation' })).not.toHaveTextContent('Mastodon');
   });
 
   it('does not market Foundry VTT', () => {

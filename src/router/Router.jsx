@@ -11,8 +11,10 @@ export function Router({ children }) {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
   const navigate = useCallback((to) => {
-    if (to === window.location.pathname) return;
-    window.history.pushState({}, '', to);
+    const destination = new URL(to, window.location.origin);
+    const current = window.location;
+    if (destination.pathname === current.pathname && destination.search === current.search && destination.hash === current.hash) return;
+    window.history.pushState({}, '', `${destination.pathname}${destination.search}${destination.hash}`);
     setLocation((current) => ({ pathname: window.location.pathname, navigationKey: current.navigationKey + 1 }));
   }, []);
   const value = useMemo(() => ({ pathname: location.pathname, navigationKey: location.navigationKey, navigate }), [location, navigate]);

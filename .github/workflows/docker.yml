@@ -43,7 +43,12 @@ jobs:
         with:
           context: .
           push: false
+          load: true
           tags: ${{ steps.meta.outputs.image_name }}:sha-${{ steps.meta.outputs.short_sha }}
+
+      - name: Validate nginx canonical routes
+        if: github.event_name == 'pull_request'
+        run: ./scripts/validate-nginx.sh "${{ steps.meta.outputs.image_name }}:sha-${{ steps.meta.outputs.short_sha }}"
 
       - name: Build and push image (main)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

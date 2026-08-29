@@ -1,4 +1,4 @@
-.PHONY: test lint build helm-lint helm-template helm-validate ci-checks
+.PHONY: test lint build nginx-validate helm-lint helm-template helm-validate ci-checks
 
 test:
 	npm run test:run
@@ -8,6 +8,9 @@ lint:
 
 build:
 	npm run build
+
+nginx-validate:
+	./scripts/validate-nginx.sh
 
 helm-lint:
 	helm lint charts/ckconflux-react
