@@ -210,7 +210,7 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByText(/A password reset does not recover that encrypted history/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Continue to Element registration' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/register');
     expect(screen.getAllByRole('link', { name: 'Open Element' }).every((link) => link.getAttribute('href') === 'https://element.ckconflux.com')).toBe(true);
-    expect(screen.getByRole('link', { name: 'Email account support' })).toHaveAttribute('href', 'mailto:admin@colonelkrud.com');
+    expect(screen.getByRole('link', { name: 'Email account support' })).toHaveAttribute('href', 'mailto:support@ckconflux.com');
     expect(document.body).not.toHaveTextContent(/riot\.colonelkrud\.com|matrix\.colonelkrud\.com|24-hour|password complexity/i);
   });
 
@@ -282,8 +282,15 @@ describe('CK Conflux application architecture', () => {
 
   it('routes support intents and exposes the independent status link', () => {
     renderPath('/support');
-    expect(screen.getByRole('heading', { name: 'Lost encrypted history or recovery' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Can sign in but old encrypted messages are unavailable' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Harassment or abuse' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Privacy or data request' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Membership or storage' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Reset password in Element' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/forgot_password');
+    expect(screen.getByRole('link', { name: 'Reset password in Element' }).compareDocumentPosition(screen.getAllByRole('link', { name: 'Email account support' })[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText(/password reset does not recreate encryption keys/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Email abuse' })).toHaveAttribute('href', 'mailto:abuse@ckconflux.com');
+    expect(screen.getByRole('link', { name: 'Privacy contact' })).toHaveAttribute('href', 'mailto:privacy@ckconflux.com');
     expect(screen.getByRole('link', { name: 'Independent status page' })).toHaveAttribute('href', 'https://status.ckconflux.com');
   });
 

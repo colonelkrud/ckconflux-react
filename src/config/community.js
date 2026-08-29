@@ -8,6 +8,19 @@ const mediaAllowance = (label, gibibytes) => Object.freeze({
 
 export const ACCOUNT_PORTAL_URL = 'https://account.ckconflux.com';
 export const MASTODON_SERVICE_URL = 'https://masto.colonelkrud.com';
+export const ELEMENT_URL = 'https://element.ckconflux.com';
+export const PASSWORD_RECOVERY_URL = `${ELEMENT_URL}/#/forgot_password`;
+export const ELEMENT_IDENTITY_RESET_GUIDE_URL = 'https://docs.element.io/latest/element-support/matrix-account-management/managing-a-matrix-account/#resetting-your-identity';
+
+const contact = (email) => Object.freeze({ email, mailto: `mailto:${email}` });
+
+// Canonical public contacts defined by ck-conflux-apps-gitops#372.
+export const PUBLIC_CONTACTS = Object.freeze({
+  support: contact('support@ckconflux.com'),
+  abuse: contact('abuse@ckconflux.com'),
+  security: contact('security@ckconflux.com'),
+  privacy: contact('privacy@ckconflux.com'),
+});
 
 export const COMMUNITY_MEDIA_ALLOWANCES = Object.freeze({
   total: mediaAllowance('Total stored-media capacity', 10),

@@ -1,3 +1,4 @@
+import { PUBLIC_CONTACTS } from '../config/community';
 import { Link } from '../router/Router';
 
 const REGISTER_URL = 'https://element.ckconflux.com/#/register';
@@ -24,7 +25,7 @@ export default function JoinPage() {
     </div></section>
     <section className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8"><div className="grid gap-5 md:grid-cols-2">
       <article className="rounded-2xl border border-cyan-300/25 bg-cyan-400/10 p-6"><h2 className="text-xl font-semibold text-white">Immediately after registration</h2><ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-300"><li>Confirm your email verification is complete.</li><li>Enable secure backup in Element.</li><li>Save the recovery key somewhere safe and separate from your main device.</li><li>Verify your session and review the security guidance.</li></ol><Link to="/security" className="mt-4 inline-flex font-semibold text-cyan-200 underline">Security &amp; recovery guidance</Link></article>
-      <article className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] p-6"><h2 className="text-xl font-semibold text-white">Registration did not work?</h2><p className="mt-3 text-sm leading-6 text-slate-300">For an invalid or rejected token, registration error, or missing verification email, contact account support. Include the step that failed and the exact error, but never send your password or recovery key.</p><a href="mailto:admin@colonelkrud.com" className="mt-4 inline-flex font-semibold text-cyan-200 underline">Email account support</a><span className="mx-2 text-slate-500" aria-hidden="true">·</span><Link to="/support" className="font-semibold text-cyan-200 underline">All support routes</Link></article>
+      <article className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] p-6"><h2 className="text-xl font-semibold text-white">Registration did not work?</h2><p className="mt-3 text-sm leading-6 text-slate-300">For an invalid or rejected token, registration error, or missing verification email, contact account support. Include the step that failed and the exact error, but never send your password or recovery key.</p><a href={PUBLIC_CONTACTS.support.mailto} className="mt-4 inline-flex font-semibold text-cyan-200 underline">Email account support</a><span className="mx-2 text-slate-500" aria-hidden="true">·</span><Link to="/support" className="font-semibold text-cyan-200 underline">All support routes</Link></article>
     </div></section>
   </>;
 }

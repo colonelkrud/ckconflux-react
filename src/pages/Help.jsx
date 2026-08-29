@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Link } from '../router/Router';
-import { ACCOUNT_PORTAL_URL, MASTODON_SERVICE_URL } from '../config/community';
+import { ACCOUNT_PORTAL_URL, MASTODON_SERVICE_URL, PASSWORD_RECOVERY_URL, PUBLIC_CONTACTS } from '../config/community';
 
 function AccordionItem({ title, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -39,6 +39,7 @@ function AccordionItem({ title, children, defaultOpen = false }) {
 void AccordionItem;
 
 const faqItems = [
+  { q: 'I forgot my account password. What should I do?', a: <p>Use <a className="font-semibold text-cyan-200 underline" href={PASSWORD_RECOVERY_URL}>Element’s self-service password recovery</a> first. If it fails after using your verified email, contact <a className="font-semibold text-cyan-200 underline" href={PUBLIC_CONTACTS.support.mailto}>account support</a>. Password recovery does not restore encryption keys or old encrypted messages.</p> },
   { q: 'What are Matrix IDs and display names?', a: <p>Your permanent Matrix ID (MXID) looks like <code>@name:ckconflux.com</code> and identifies you across federation. A display name is the changeable name people see in rooms and is not a unique account identifier.</p> },
   { q: 'How do DMs, rooms, and Spaces differ?', a: <p>A direct message is a room intended for a smaller conversation. Rooms hold conversations and membership; their visibility, permissions, and encryption can differ. Spaces organize related rooms without replacing the rooms themselves.</p> },
   { q: 'How do notifications work?', a: <p>Configure notifications globally and per room. For a busy room, choose mentions-only or another available level rather than muting everything. Client options can differ.</p> },
