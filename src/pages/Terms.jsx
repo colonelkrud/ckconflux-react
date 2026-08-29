@@ -1,3 +1,4 @@
+import { PUBLIC_CONTACTS } from '../config/community';
 import LegalLayout from '../layout/LegalLayout';
 
 export default function TermsPage() {
@@ -67,7 +68,7 @@ export default function TermsPage() {
 
       <section>
         <h2 className="text-xl font-semibold text-white">Reporting Abuse and GDPR Requests</h2>
-        <p>Report inappropriate content or GDPR requests via built-in reporting methods, by mentioning moderation bot @draupnir:ckconflux.com, or by emailing abuse@mg.colonelkrud.com.</p>
+        <p>Report inappropriate content via built-in reporting methods, by mentioning moderation bot @draupnir:ckconflux.com, or by emailing <a href={PUBLIC_CONTACTS.abuse.mailto}>{PUBLIC_CONTACTS.abuse.email}</a>. Send privacy and data requests to <a href={PUBLIC_CONTACTS.privacy.mailto}>{PUBLIC_CONTACTS.privacy.email}</a>.</p>
         <p className="mt-2">Content is typically reviewed and purged within 24 hours of reporting. GDPR data requests are delivered via your registered email. If your account is deleted before a GDPR request is fulfilled, your content may already have been permanently removed.</p>
       </section>
 
