@@ -2,7 +2,7 @@ import { ExternalLink, SiteLink } from './SiteLink';
 import { ACCOUNT_PORTAL_URL } from '../config/community';
 import { INDEPENDENT_STATUS_BADGE_LINK, INDEPENDENT_STATUS_BADGE_URL } from '../status/status';
 const groups = [
-  ['Explore', [['Join','/join'],['Membership','/membership'],['My Account',ACCOUNT_PORTAL_URL, true],['Security','/security'],['Status','/status']]],
+  ['Explore', [['About','/about'],['Join','/join'],['Membership','/membership'],['My Account',ACCOUNT_PORTAL_URL, true],['Security','/security'],['Status','/status']]],
   ['Community', [['Help','/help'],['Support','/support'],['TeamSpeak 6 Beta','/teamspeak']]],
   ['Legal', [['Privacy','/privacy'],['Terms','/terms'],['Rules','/rules']]],
 ];

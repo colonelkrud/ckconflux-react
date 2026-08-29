@@ -17,7 +17,7 @@ describe('CK Conflux application architecture', () => {
   });
 
   it.each([
-    ['/why-ck-conflux', 'Why CK Conflux'], ['/join', 'Create your CK Conflux Matrix account'], ['/matrix', 'Open communication, with a community you know'], ['/calls', 'Element Call'],
+    ['/about', 'About CK Conflux'], ['/why-ck-conflux', 'Why CK Conflux'], ['/join', 'Create your CK Conflux Matrix account'], ['/matrix', 'Open communication, with a community you know'], ['/calls', 'Element Call'],
     ['/membership', 'Membership'], ['/security', 'Security'], ['/privacy', 'CK Conflux Privacy Model'], ['/status', 'Service status'],
     ['/help', 'Matrix onboarding, FAQ, and support resources'], ['/support', 'Support'], ['/teamspeak', 'TeamSpeak 6 Beta'],
     ['/terms', 'CK Conflux Terms of Use'], ['/rules', 'Server Rules'],
@@ -48,8 +48,22 @@ describe('CK Conflux application architecture', () => {
     expect(badge.closest('a')).toHaveAttribute('target', '_blank');
     expect(badge.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
     expect(screen.getByRole('navigation', { name: 'Explore links' })).toHaveTextContent('Status');
+    expect(screen.getByRole('navigation', { name: 'Explore links' })).toHaveTextContent('About');
     expect(screen.getByRole('navigation', { name: 'Community links' })).toHaveTextContent('Support');
     expect(screen.getByRole('navigation', { name: 'Legal links' })).toHaveTextContent('Privacy');
+  });
+
+  it('explains CK Conflux operator boundaries and community-run availability', () => {
+    renderPath('/about');
+    expect(screen.getByText(/independently and community-operated/i)).toHaveTextContent(/not operated by Element or the Matrix.org Foundation/i);
+    expect(screen.getByRole('heading', { name: 'Who does what?' }).closest('section')).toHaveTextContent(/Element.*recommended app.*does not operate CK Conflux/i);
+    expect(screen.getByRole('heading', { name: 'Who does what?' }).closest('section')).toHaveTextContent(/Matrix.*protocol and federated network.*Matrix.org Foundation does not operate CK Conflux/i);
+    expect(screen.getByText(/does not control third-party homeservers/i)).toBeInTheDocument();
+    expect(screen.getByText(/best-effort and community-run/i)).toHaveTextContent(/does not promise an SLA/i);
+    expect(screen.getByRole('link', { name: 'View status' })).toHaveAttribute('href', '/status');
+    expect(screen.getByRole('link', { name: 'Independent status page' })).toHaveAttribute('href', 'https://status.ckconflux.com');
+    expect(screen.getByRole('link', { name: 'Open Support' })).toHaveAttribute('href', '/support');
+    expect(screen.getByText(/Server Notices or official rooms/i)).toBeInTheDocument();
   });
 
   it('opens and closes the accessible mobile navigation', () => {
