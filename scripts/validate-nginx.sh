@@ -16,6 +16,19 @@ trap cleanup EXIT INT TERM
 port=$(docker port "$container" 80/tcp | sed -n '1s/.*://p')
 base_url="http://127.0.0.1:$port"
 
+wait_for_nginx() {
+  attempts=0
+  while ! curl -sS -o /dev/null "$base_url/" 2>/dev/null; do
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge 30 ]; then
+      echo "nginx did not become ready at $base_url" >&2
+      docker logs "$container" >&2 || true
+      exit 1
+    fi
+    sleep 0.2
+  done
+}
+
 assert_status() {
   path=$1
   expected=$2
@@ -34,10 +47,12 @@ assert_redirect() {
   echo "$headers" | tr -d '\r' | grep -Fqx "Location: $base_url$expected_location"
 }
 
+wait_for_nginx
 assert_status / 200
 assert_status /help 200
 assert_status /privacy 200
 assert_redirect '/help.html?from=validation' '/help?from=validation'
+assert_redirect '/index.html?from=validation' '/?from=validation'
 assert_redirect /privacy.html /privacy
 assert_redirect /index.html /
 assert_status /does-not-exist 404
