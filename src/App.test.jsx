@@ -40,6 +40,18 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getAllByRole('link', { name: 'Open Element' })[0]).toHaveAttribute('href', 'https://element.ckconflux.com');
   });
 
+  it('renders the independent service status badge without replacing footer navigation', () => {
+    renderPath('/');
+    const badge = screen.getByRole('img', { name: 'CK Conflux service status' });
+    expect(badge).toHaveAttribute('src', 'https://badge.uptimerobot.com/psp/177dfd29052bc6cc25407cf35076378b.svg?style=text&theme=dark');
+    expect(badge.closest('a')).toHaveAttribute('href', 'https://status.ckconflux.com?utm_source=status_badge&utm_medium=referral');
+    expect(badge.closest('a')).toHaveAttribute('target', '_blank');
+    expect(badge.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.getByRole('navigation', { name: 'Explore links' })).toHaveTextContent('Status');
+    expect(screen.getByRole('navigation', { name: 'Community links' })).toHaveTextContent('Support');
+    expect(screen.getByRole('navigation', { name: 'Legal links' })).toHaveTextContent('Privacy');
+  });
+
   it('opens and closes the accessible mobile navigation', () => {
     renderPath('/');
     const button = screen.getByRole('button', { name: 'Open navigation menu' });

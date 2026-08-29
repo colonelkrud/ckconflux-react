@@ -12,6 +12,8 @@ const COMPONENT_ALIASES = Object.keys(COMPONENT_LABELS).sort((a, b) => b.length 
 
 export const STATUS_ENDPOINT = '/status.json';
 export const INDEPENDENT_STATUS_URL = 'https://status.ckconflux.com';
+export const INDEPENDENT_STATUS_BADGE_URL = 'https://badge.uptimerobot.com/psp/177dfd29052bc6cc25407cf35076378b.svg?style=text&theme=dark';
+export const INDEPENDENT_STATUS_BADGE_LINK = `${INDEPENDENT_STATUS_URL}?utm_source=status_badge&utm_medium=referral`;
 
 export function healthState(value) {
   const raw = typeof value === 'object' && value ? value.status ?? value.state ?? value.health ?? value.operational : value;
