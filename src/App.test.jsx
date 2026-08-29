@@ -11,13 +11,13 @@ describe('CK Conflux application architecture', () => {
     renderPath('/');
     expect(screen.getByRole('heading', { name: /Private community chat, secure messaging/i })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Open Element' })[1]).toHaveAttribute('href', 'https://element.ckconflux.com');
-    expect(screen.getByRole('link', { name: 'Create Account' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/register');
+    expect(screen.getByRole('link', { name: 'Create Account' })).toHaveAttribute('href', '/join');
     expect(screen.getByRole('link', { name: /Explore Element Call/i })).toHaveAttribute('href', '/calls');
     expect(document.querySelector('#main-content')).not.toHaveTextContent('TeamSpeak');
   });
 
   it.each([
-    ['/why-ck-conflux', 'Why CK Conflux'], ['/matrix', 'Open communication, with a community you know'], ['/calls', 'Element Call'],
+    ['/why-ck-conflux', 'Why CK Conflux'], ['/join', 'Create your CK Conflux Matrix account'], ['/matrix', 'Open communication, with a community you know'], ['/calls', 'Element Call'],
     ['/membership', 'Membership'], ['/security', 'Security'], ['/privacy', 'CK Conflux Privacy Model'], ['/status', 'Service status'],
     ['/help', 'Matrix onboarding, FAQ, and support resources'], ['/support', 'Support'], ['/teamspeak', 'TeamSpeak 6 Beta'],
     ['/terms', 'CK Conflux Terms of Use'], ['/rules', 'Server Rules'],
@@ -184,11 +184,29 @@ describe('CK Conflux application architecture', () => {
 
   it('provides the critical Matrix calls, account, security, and help links', () => {
     renderPath('/matrix');
-    expect(screen.getByRole('link', { name: 'Create Account' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/register');
+    expect(screen.getByRole('link', { name: 'Create Account' })).toHaveAttribute('href', '/join');
     expect(screen.getAllByRole('link', { name: 'Open Element' })[0]).toHaveAttribute('href', 'https://element.ckconflux.com');
     expect(screen.getAllByRole('link', { name: 'Calls' }).some((link) => link.getAttribute('href') === '/calls')).toBe(true);
     expect(screen.getByRole('link', { name: 'Security & recovery' })).toHaveAttribute('href', '/security');
     expect(screen.getByRole('link', { name: 'Help center' })).toHaveAttribute('href', '/help');
+  });
+
+  it('guides prospective members through current registration and recovery contracts', () => {
+    renderPath('/join');
+    expect(screen.getByRole('heading', { name: 'Who can join?' })).toBeInTheDocument();
+    expect(screen.getByText(/invitation-based community for people aged 18 or older/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Why require a token?' })).toBeInTheDocument();
+    expect(screen.getByText(/existing CK Conflux member/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Buy Me a Coffee' })).toHaveAttribute('href', 'https://buymeacoffee.com/conflux');
+    expect(screen.getByText(/token, an available username, an email address, and an account password/i)).toBeInTheDocument();
+    expect(screen.getByText(/makes the enabled password-recovery path possible/i)).toBeInTheDocument();
+    expect(screen.getByText('@name:ckconflux.com')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Password ≠ recovery key' })).toBeInTheDocument();
+    expect(screen.getByText(/A password reset does not recover that encrypted history/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Continue to Element registration' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/register');
+    expect(screen.getAllByRole('link', { name: 'Open Element' }).every((link) => link.getAttribute('href') === 'https://element.ckconflux.com')).toBe(true);
+    expect(screen.getByRole('link', { name: 'Email account support' })).toHaveAttribute('href', 'mailto:admin@colonelkrud.com');
+    expect(document.body).not.toHaveTextContent(/riot\.colonelkrud\.com|matrix\.colonelkrud\.com|24-hour|password complexity/i);
   });
 
   it('presents Element Call as the primary MatrixRTC voice and video route', () => {
