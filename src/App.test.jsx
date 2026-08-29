@@ -64,14 +64,19 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('explains free community membership and the illustrative storage allowance', () => {
+  it('labels both default media limits and explains how they differ', () => {
     renderPath('/membership');
     expect(screen.getByRole('heading', { name: /Communication is for the community/i })).toBeInTheDocument();
     expect(screen.getByText(/Critical messaging, calls, and community participation remain free/i)).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '10 GiB of media storage' })).toBeInTheDocument();
+    expect(screen.getByText('Total stored-media capacity')).toBeInTheDocument();
+    expect(screen.getByText('Monthly media allowance')).toBeInTheDocument();
+    expect(screen.getByText('Total stored-media capacity').closest('div')).toHaveTextContent('10 GiB');
+    expect(screen.getByText('Monthly media allowance').closest('div')).toHaveTextContent('1 GiB');
     expect(screen.getByText('10,737,418,240 bytes')).toBeInTheDocument();
-    expect(screen.getByText(/roughly 1 MB per photo/i)).toHaveTextContent(/on the order of 10,000 photos/);
-    expect(screen.getByText(/This is only an illustration/i).closest('p')).toHaveTextContent(/resolution, compression, format, device, and quality settings/);
+    expect(screen.getByText('1,073,741,824 bytes')).toBeInTheDocument();
+    expect(screen.getByText(/The total capacity is how much media/i)).toHaveTextContent(/reach the monthly limit.*still have room/i);
+    expect(screen.getByText(/roughly 1 MB per photo/i)).toHaveTextContent(/on the order of 10,000 stored photos/);
+    expect(screen.getByText(/This total-capacity example is only an illustration/i).closest('p')).toHaveTextContent(/not a monthly upload guarantee/);
     expect(document.body).not.toHaveTextContent(/unlock essential messaging|paid-only messaging|premium messaging/i);
   });
 
@@ -79,7 +84,7 @@ describe('CK Conflux application architecture', () => {
     renderPath('/membership');
     const accountLinks = screen.getAllByRole('link', { name: /My Account/i });
     expect(accountLinks.some((link) => link.getAttribute('href') === 'https://account.ckconflux.com')).toBe(true);
-    expect(screen.getByText(/Membership, storage, and account administration/)).toBeInTheDocument();
+    expect(screen.getByText(/Membership, storage, and account administration/)).toHaveTextContent(/authoritative.*actual current total capacity, monthly allowance, usage, and entitlement/i);
     expect(screen.getByText(/Messaging, community rooms, and calls/)).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Open Element' }).some((link) => link.getAttribute('href') === 'https://element.ckconflux.com')).toBe(true);
   });

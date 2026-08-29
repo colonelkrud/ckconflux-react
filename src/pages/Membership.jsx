@@ -1,7 +1,7 @@
 import { Database, Gauge, Globe2, HardDrive, Heart, Server, ShieldCheck, Wifi } from 'lucide-react';
 import { createElement } from 'react';
 import { ExternalLink, SiteLink } from '../components/SiteLink';
-import { ACCOUNT_PORTAL_URL, COMMUNITY_MEDIA_QUOTA } from '../config/community';
+import { ACCOUNT_PORTAL_URL, COMMUNITY_MEDIA_ALLOWANCES } from '../config/community';
 
 const infrastructure = [
   [Server, 'Hosting & compute'],
@@ -16,9 +16,8 @@ const infrastructure = [
 const ILLUSTRATIVE_PHOTO_BYTES = 1024 ** 2;
 const PHOTO_COUNT_ROUNDING = 1000;
 const illustrativePhotoCount = Math.round(
-  COMMUNITY_MEDIA_QUOTA.bytes / ILLUSTRATIVE_PHOTO_BYTES / PHOTO_COUNT_ROUNDING,
+  COMMUNITY_MEDIA_ALLOWANCES.total.bytes / ILLUSTRATIVE_PHOTO_BYTES / PHOTO_COUNT_ROUNDING,
 ) * PHOTO_COUNT_ROUNDING;
-const illustrativePhotosPerDay = Math.round(illustrativePhotoCount / 365);
 
 export default function Membership() {
   return <>
@@ -56,22 +55,25 @@ export default function Membership() {
 
     <section className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8">
       <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-        <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Included community capacity</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white">{COMMUNITY_MEDIA_QUOTA.gibibytes} GiB of media storage</h2>
-        <p className="mt-2 font-mono text-sm text-slate-400">{COMMUNITY_MEDIA_QUOTA.bytes.toLocaleString('en-US')} bytes</p>
-        <p className="mt-5 leading-7 text-slate-300">At roughly 1 MB per photo, {COMMUNITY_MEDIA_QUOTA.gibibytes} GiB is on the order of {illustrativePhotoCount.toLocaleString('en-US')} photos, or about {illustrativePhotosPerDay.toLocaleString('en-US')} photos per day for a year.</p>
-        <p className="mt-4 rounded-xl border border-amber-200/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50"><strong>This is only an illustration.</strong> Actual image sizes vary substantially with resolution, compression, format, device, and quality settings. It is not a guaranteed file count, and quotas may change as the service evolves.</p>
+        <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Included community media</p>
+        <h2 className="mt-3 text-3xl font-semibold text-white">Default media allowances</h2>
+        <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+          {Object.values(COMMUNITY_MEDIA_ALLOWANCES).map((allowance) => <div key={allowance.label} className="rounded-2xl border border-white/10 bg-slate-950/30 p-4"><dt className="text-sm font-semibold text-cyan-100">{allowance.label}</dt><dd className="mt-2 text-2xl font-semibold text-white">{allowance.gibibytes} GiB</dd><dd className="mt-1 font-mono text-xs text-slate-400">{allowance.bytes.toLocaleString('en-US')} bytes</dd></div>)}
+        </dl>
+        <p className="mt-5 leading-7 text-slate-300">The total capacity is how much media can remain stored in your account. The monthly allowance limits media added during a month. You can therefore reach the monthly limit after adding {COMMUNITY_MEDIA_ALLOWANCES.monthly.gibibytes} GiB even when you still have room within the {COMMUNITY_MEDIA_ALLOWANCES.total.gibibytes} GiB total capacity.</p>
+        <p className="mt-4 leading-7 text-slate-300">At roughly 1 MB per photo, the {COMMUNITY_MEDIA_ALLOWANCES.total.gibibytes} GiB <strong className="font-semibold text-white">total capacity</strong> is on the order of {illustrativePhotoCount.toLocaleString('en-US')} stored photos.</p>
+        <p className="mt-4 rounded-xl border border-amber-200/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50"><strong>This total-capacity example is only an illustration, not a monthly upload guarantee.</strong> Actual image sizes vary substantially with resolution, compression, format, device, and quality settings. It is not a guaranteed file count, and allowances may change as the service evolves.</p>
       </div>
       <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
         <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Two clear destinations</p>
         <h2 className="mt-3 text-2xl font-semibold text-white">Manage or communicate</h2>
         <div className="mt-6 space-y-6">
-          <div><h3 className="font-semibold text-white">My Account</h3><p className="mt-1 text-sm leading-6 text-slate-300">Membership, storage, and account administration. The portal can show your authenticated Matrix account/MXID, storage usage and allowance, and current entitlement, and provides supporter association and supported gift or benefit workflows when available.</p><ExternalLink href={ACCOUNT_PORTAL_URL} className="mt-3 inline-flex font-semibold text-cyan-200 underline underline-offset-4">Go to My Account</ExternalLink></div>
+          <div><h3 className="font-semibold text-white">My Account</h3><p className="mt-1 text-sm leading-6 text-slate-300">Membership, storage, and account administration. My Account is authoritative for your signed-in account’s actual current total capacity, monthly allowance, usage, and entitlement. It also provides supporter association and supported gift or benefit workflows when available.</p><ExternalLink href={ACCOUNT_PORTAL_URL} className="mt-3 inline-flex font-semibold text-cyan-200 underline underline-offset-4">Go to My Account</ExternalLink></div>
           <div className="border-t border-white/10 pt-6"><h3 className="font-semibold text-white">Open Element</h3><p className="mt-1 text-sm leading-6 text-slate-300">Messaging, community rooms, and calls. Use Element to participate—not to administer membership or storage.</p><ExternalLink href="https://element.ckconflux.com" className="mt-3 inline-flex font-semibold text-cyan-200 underline underline-offset-4">Open Element</ExternalLink></div>
         </div>
         <p className="mt-6 text-xs leading-5 text-slate-400">Sign-in and user-specific account data stay in the dedicated account portal; this public site does not retrieve them.</p>
       </div>
-      <div className="lg:col-span-2 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-6 text-center"><h2 className="text-xl font-semibold text-white">Need help choosing where to go?</h2><p className="mt-2 text-sm text-slate-300">Visit the help center for service guidance, or My Account for your own allowance and entitlement.</p><SiteLink to="/help" className="mt-4 inline-flex rounded-lg border border-white/20 px-4 py-2 font-semibold text-white">Visit Help</SiteLink></div>
+      <div className="lg:col-span-2 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-6 text-center"><h2 className="text-xl font-semibold text-white">Need help choosing where to go?</h2><p className="mt-2 text-sm text-slate-300">Visit the help center for service guidance, or My Account for your actual current total capacity, monthly allowance, usage, and entitlement.</p><SiteLink to="/help" className="mt-4 inline-flex rounded-lg border border-white/20 px-4 py-2 font-semibold text-white">Visit Help</SiteLink></div>
     </section>
   </>;
 }
