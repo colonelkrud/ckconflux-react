@@ -33,18 +33,40 @@ assert_status() {
   path=$1
   expected=$2
   actual=$(curl -sS -o /dev/null -w '%{http_code}' "$base_url$path")
-  test "$actual" = "$expected" || {
+  if [ "$actual" != "$expected" ]; then
     echo "Expected $path to return $expected, got $actual" >&2
     exit 1
-  }
+  fi
 }
 
 assert_redirect() {
   path=$1
   expected_location=$2
   headers=$(curl -sS -D - -o /dev/null "$base_url$path")
-  echo "$headers" | tr -d '\r' | grep -q '^HTTP/1.1 308 '
-  echo "$headers" | tr -d '\r' | grep -Fqx "Location: $base_url$expected_location"
+  status=$(printf '%s\n' "$headers" | tr -d '\r' | sed -n '1s#^HTTP/[0-9.]* \([0-9][0-9][0-9]\).*$#\1#p')
+  location=$(printf '%s\n' "$headers" | tr -d '\r' | sed -n 's/^Location: //p' | head -n 1)
+
+  if [ "$status" != "308" ]; then
+    echo "Expected $path to return 308, got ${status:-unknown}" >&2
+    printf '%s\n' "$headers" >&2
+    exit 1
+  fi
+
+  if [ "$location" != "$expected_location" ]; then
+    echo "Expected $path Location to be $expected_location, got ${location:-missing}" >&2
+    printf '%s\n' "$headers" >&2
+    exit 1
+  fi
+}
+
+assert_title() {
+  path=$1
+  expected=$2
+  body=$(curl -fsS "$base_url$path")
+  if ! printf '%s\n' "$body" | grep -Fq "<title>$expected</title>"; then
+    echo "Expected $path title to be '$expected'" >&2
+    exit 1
+  fi
 }
 
 wait_for_nginx
@@ -57,8 +79,7 @@ assert_redirect /privacy.html /privacy
 assert_redirect /index.html /
 assert_status /does-not-exist 404
 assert_status /404.html 404
-
-curl -fsS "$base_url/help" | grep -q '<title>Help | CK Conflux</title>'
-curl -fsS "$base_url/privacy" | grep -q '<title>Privacy Policy | CK Conflux</title>'
+assert_title /help 'Help | CK Conflux'
+assert_title /privacy 'Privacy Policy | CK Conflux'
 
 echo "nginx route validation passed"
