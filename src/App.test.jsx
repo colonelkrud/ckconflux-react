@@ -296,16 +296,36 @@ describe('CK Conflux application architecture', () => {
 
   it('routes support intents and exposes the independent status link', () => {
     renderPath('/support');
+    expect(screen.getByRole('heading', { name: 'Forgot account password' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Verification email problem' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Can sign in but old encrypted messages are unavailable' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'No recovery key and no verified device' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Harassment or abuse' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Privacy or data request' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Service outage' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Membership or storage' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Reset password in Element' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/forgot_password');
     expect(screen.getByRole('link', { name: 'Reset password in Element' }).compareDocumentPosition(screen.getAllByRole('link', { name: 'Email account support' })[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText(/password reset does not recreate encryption keys/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Email abuse' })).toHaveAttribute('href', 'mailto:abuse@ckconflux.com');
-    expect(screen.getByRole('link', { name: 'Privacy contact' })).toHaveAttribute('href', 'mailto:privacy@ckconflux.com');
+    expect(screen.getByRole('link', { name: 'Email security' })).toHaveAttribute('href', 'mailto:abuse@mg.ckconflux.com');
+    expect(screen.getByRole('link', { name: 'Email abuse' })).toHaveAttribute('href', 'mailto:abuse@mg.ckconflux.com');
+    expect(screen.getByRole('link', { name: 'Privacy contact' })).toHaveAttribute('href', 'mailto:abuse@mg.ckconflux.com');
     expect(screen.getByRole('link', { name: 'Independent status page' })).toHaveAttribute('href', 'https://status.ckconflux.com');
+  });
+
+  it.each([
+    ['/privacy', ['abuse@mg.ckconflux.com']],
+    ['/terms', ['abuse@mg.ckconflux.com']],
+    ['/support', ['support@ckconflux.com', 'abuse@mg.ckconflux.com']],
+  ])('publishes only canonical contact addresses on %s', (path, expectedAddresses) => {
+    renderPath(path);
+    const addresses = [...document.querySelectorAll('a[href^="mailto:"]')]
+      .map((link) => link.getAttribute('href').slice('mailto:'.length));
+
+    expect(new Set(addresses)).toEqual(new Set(expectedAddresses));
+    expect(addresses).not.toContain('abuse@ckconflux.com');
+    expect(addresses).not.toContain('security@ckconflux.com');
+    expect(addresses).not.toContain('privacy@ckconflux.com');
   });
 
   it('renders successful component status and its generation time', async () => {
