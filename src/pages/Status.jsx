@@ -56,6 +56,7 @@ export default function Status() {
   const status = useLocalStatus({ refreshIntervalMs: 60000 });
   const error = status.phase === 'error';
   const snapshotMissing = status.phase === 'ready' && status.stale && status.components.length === 0 && !status.generatedAt;
+  const hasUnknownComponent = status.components.some(({ state }) => state === 'unknown');
   const headline = snapshotMissing
     ? 'Status snapshot unavailable'
     : status.stale
@@ -65,7 +66,9 @@ export default function Status() {
     ? 'CK Conflux has not produced a status snapshot yet. Check independent monitoring below for an outside view.'
     : status.stale
       ? `CK Conflux is serving its last completed status snapshot. Last reported state: ${statusHeadline(status.overall)}.`
-      : DETAILS[status.overall];
+      : status.overall === 'unknown' && !hasUnknownComponent
+        ? 'Status information is incomplete; the status feed did not confirm a complete platform state.'
+        : DETAILS[status.overall];
   const statusStyle = status.stale ? STATE_STYLE.degraded : STATE_STYLE[status.overall];
   const statusIcon = status.stale ? '!' : ICONS[status.overall];
   const staleNotice = snapshotMissing
