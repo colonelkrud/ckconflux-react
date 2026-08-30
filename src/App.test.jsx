@@ -345,8 +345,10 @@ describe('CK Conflux application architecture', () => {
     const distinction = screen.getByRole('heading', { name: 'Trusting your session is not verifying another person' }).closest('article');
     expect(distinction).toHaveTextContent(/Your own new device or session.*Verifying another person/s);
     expect(distinction).toHaveTextContent(/do not restore your own encryption state/i);
-    expect(screen.getByRole('link', { name: 'Element account recovery and session guidance' })).toHaveAttribute('href', expect.stringMatching(/^https:\/\/docs\.element\.io\//));
-    expect(screen.getByRole('link', { name: 'Element guide to verifying another user' })).toHaveAttribute('href', expect.stringMatching(/^https:\/\/docs\.element\.io\//));
+    expect(screen.getAllByRole('link', { name: 'Element guide to verifying a new login' })[0]).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/matrix-account-management/verifying-a-new-login/');
+    expect(screen.getByRole('link', { name: 'Element guide to verifying another user' })).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/matrix-rooms/room-members/verifying-a-user/');
+    expect(screen.getByRole('link', { name: 'Element secure-backup and recovery-key guide' })).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/matrix-account-management/secure-backup/');
+    expect(document.querySelectorAll('a[href*="managing-a-matrix-account"], a[href*="#resetting-your-identity"]')).toHaveLength(0);
     expect(document.body).not.toHaveTextContent(/device verification is optional/i);
   });
 
@@ -368,6 +370,8 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('link', { name: 'Reset password in Element' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/forgot_password');
     expect(screen.getByRole('link', { name: 'Reset password in Element' }).compareDocumentPosition(screen.getAllByRole('link', { name: 'Email account support' })[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText(/password reset does not recreate encryption keys/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Reset your identity with Element’s guide' })).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/matrix-account-management/resetting-your-identity/');
+    expect(document.querySelectorAll('a[href*="managing-a-matrix-account"], a[href*="#resetting-your-identity"]')).toHaveLength(0);
     expect(screen.getByRole('link', { name: 'Email security' })).toHaveAttribute('href', 'mailto:abuse@mg.ckconflux.com');
     expect(screen.getByRole('link', { name: 'Email abuse' })).toHaveAttribute('href', 'mailto:abuse@mg.ckconflux.com');
     expect(screen.getByRole('link', { name: 'Privacy contact' })).toHaveAttribute('href', 'mailto:abuse@mg.ckconflux.com');

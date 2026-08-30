@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { COMMUNITY_MEDIA_ALLOWANCES, COMMUNITY_MEDIA_POLICY, PUBLIC_CONTACTS, SUPPORTER_URL } from './community';
+import { COMMUNITY_MEDIA_ALLOWANCES, COMMUNITY_MEDIA_POLICY, ELEMENT_RECOVERY_GUIDES, PUBLIC_CONTACTS, SUPPORTER_URL } from './community';
+
+describe('maintained Element recovery documentation', () => {
+  it('keeps each recovery and verification task on a distinct first-party guide', () => {
+    expect(ELEMENT_RECOVERY_GUIDES).toEqual({
+      noRecoveryMethod: 'https://docs.element.io/latest/element-support/matrix-account-management/resetting-your-identity/',
+      recoveryKey: 'https://docs.element.io/latest/element-support/matrix-account-management/secure-backup/',
+      newSession: 'https://docs.element.io/latest/element-support/matrix-account-management/verifying-a-new-login/',
+      anotherUser: 'https://docs.element.io/latest/element-support/matrix-rooms/room-members/verifying-a-user/',
+    });
+
+    expect(new Set(Object.values(ELEMENT_RECOVERY_GUIDES))).toHaveProperty('size', 4);
+    expect(Object.values(ELEMENT_RECOVERY_GUIDES).join(' ')).not.toContain('managing-a-matrix-account');
+    expect(Object.values(ELEMENT_RECOVERY_GUIDES).join(' ')).not.toContain('#resetting-your-identity');
+  });
+});
 
 describe('canonical public contacts', () => {
   it('maps each intent to the canonical public endpoint', () => {
