@@ -19,6 +19,16 @@ describe('status payload normalization', () => {
     expect(parseStatus({ services: { matrix: 'degraded', calls: 'failed' } }).overall).toBe('unavailable');
   });
 
+  it('honors an explicit feed-level outage over healthy component entries', () => {
+    const parsed = parseStatus({ status: 'unavailable', checks: { website: 'ok', matrix: 'ok' } });
+    expect(parsed.overall).toBe('unavailable');
+  });
+
+  it('keeps an explicit feed-level degraded state without escalating it to unavailable', () => {
+    const parsed = parseStatus({ status: 'degraded', checks: { website: 'ok', matrix: 'ok' } });
+    expect(parsed.overall).toBe('degraded');
+  });
+
   it('includes unknown future components safely instead of dropping them', () => {
     const parsed = parseStatus({ components: { website: 'up', bridgeService: 'mystery' } });
     expect(parsed.overall).toBe('unknown');
@@ -28,6 +38,22 @@ describe('status payload normalization', () => {
   it('uses the least healthy state when aliases describe the same category', () => {
     const parsed = parseStatus({ checks: { login: 'ok', authentication: 'down' } });
     expect(parsed.components).toEqual([{ id: 'signin', name: 'Sign in', state: 'unavailable' }]);
+  });
+
+  it('keeps an unknown alias result ahead of an operational alias result', () => {
+    const parsed = parseStatus({ checks: { matrix: 'ok', synapse: 'mystery' } });
+    expect(parsed.components).toEqual([{ id: 'messaging', name: 'Messaging', state: 'unknown' }]);
+    expect(parsed.overall).toBe('unknown');
+  });
+
+  it('preserves recognized top-level component payloads', () => {
+    const parsed = parseStatus({ website: 'up', matrix: 'degraded', generated_at: '2026-08-30T12:00:00Z' });
+    expect(parsed.overall).toBe('degraded');
+    expect(parsed.generatedAt).toBe('2026-08-30T12:00:00Z');
+    expect(parsed.components).toEqual([
+      { id: 'messaging', name: 'Messaging', state: 'degraded' },
+      { id: 'website', name: 'Website', state: 'operational' },
+    ]);
   });
 
   it('rejects JSON without meaningful component data', () => {
