@@ -15,6 +15,65 @@ describe('status payload normalization', () => {
     ]);
   });
 
+  it('parses the current GitOps public status contract and freshness metadata', () => {
+    const parsed = parseStatus({
+      status: 'ok',
+      generated_at: '2026-08-30T18:00:00Z',
+      snapshot_age_seconds: 12.4,
+      stale: false,
+      messages: [],
+      checks: {
+        website: 'ok',
+        login: 'ok',
+        matrix: 'ok',
+        media: 'ok',
+        calls: 'ok',
+        membership: 'ok',
+      },
+    });
+
+    expect(parsed.overall).toBe('operational');
+    expect(parsed.stale).toBe(false);
+    expect(parsed.snapshotAgeSeconds).toBe(12.4);
+    expect(parsed.generatedAt).toBe('2026-08-30T18:00:00Z');
+    expect(parsed.components).toHaveLength(6);
+  });
+
+  it('preserves a stale healthy snapshot instead of treating the response as fresh', () => {
+    const parsed = parseStatus({
+      status: 'ok',
+      generated_at: '2026-08-30T18:00:00Z',
+      snapshot_age_seconds: 125.2,
+      stale: true,
+      messages: [],
+      checks: { website: 'ok', login: 'ok', matrix: 'ok', media: 'ok', calls: 'ok', membership: 'ok' },
+    });
+
+    expect(parsed.overall).toBe('operational');
+    expect(parsed.stale).toBe(true);
+    expect(parsed.snapshotAgeSeconds).toBe(125.2);
+  });
+
+  it('accepts the structured startup response before a snapshot exists', () => {
+    const parsed = parseStatus({
+      status: 'unknown',
+      generated_at: null,
+      snapshot_age_seconds: null,
+      stale: true,
+      messages: ['Status snapshot is not yet available'],
+      checks: {},
+    });
+
+    expect(parsed).toMatchObject({
+      overall: 'unknown',
+      components: [],
+      generatedAt: null,
+      snapshotAgeSeconds: null,
+      stale: true,
+      messages: ['Status snapshot is not yet available'],
+    });
+  });
+
   it('aggregates unavailable ahead of degraded', () => {
     expect(parseStatus({ services: { matrix: 'degraded', calls: 'failed' } }).overall).toBe('unavailable');
   });
@@ -46,7 +105,7 @@ describe('status payload normalization', () => {
     expect(parsed.overall).toBe('unknown');
   });
 
-  it('preserves recognized top-level component payloads', () => {
+  it('preserves recognized top-level component payloads for legacy compatibility', () => {
     const parsed = parseStatus({ website: 'up', matrix: 'degraded', generated_at: '2026-08-30T12:00:00Z' });
     expect(parsed.overall).toBe('degraded');
     expect(parsed.generatedAt).toBe('2026-08-30T12:00:00Z');
@@ -56,7 +115,7 @@ describe('status payload normalization', () => {
     ]);
   });
 
-  it('rejects JSON without meaningful component data', () => {
+  it('rejects JSON without meaningful component data or the current structured contract', () => {
     expect(parseStatus({ status: 'degraded', message: 'Synapse degraded' })).toBeNull();
     expect(parseStatus({ checks: {} })).toBeNull();
   });
