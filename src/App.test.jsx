@@ -11,7 +11,7 @@ describe('CK Conflux application architecture', () => {
     renderPath('/');
     expect(screen.getByRole('heading', { name: /Private community chat, secure messaging/i })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Open Element' })[1]).toHaveAttribute('href', 'https://element.ckconflux.com');
-    expect(screen.getByRole('link', { name: 'Create Account' })).toHaveAttribute('href', '/join');
+    expect(screen.getAllByRole('link', { name: 'Join CK Conflux' }).some((link) => link.getAttribute('href') === '/join')).toBe(true);
     expect(screen.getByRole('link', { name: /Explore Element Call/i })).toHaveAttribute('href', '/calls');
     expect(document.querySelector('#main-content')).not.toHaveTextContent('TeamSpeak');
   });
@@ -38,6 +38,7 @@ describe('CK Conflux application architecture', () => {
     expect(nav).toHaveTextContent('Why CK Conflux'); expect(nav).toHaveTextContent('Matrix'); expect(nav).toHaveTextContent('Calls'); expect(nav).toHaveTextContent('Help');
     expect(screen.getAllByRole('link', { name: 'My Account' })[0]).toHaveAttribute('href', 'https://account.ckconflux.com');
     expect(screen.getAllByRole('link', { name: 'Open Element' })[0]).toHaveAttribute('href', 'https://element.ckconflux.com');
+    expect(screen.getAllByRole('link', { name: 'Join CK Conflux' })[0]).toHaveAttribute('href', '/join');
   });
 
   it('renders the independent service status badge without replacing footer navigation', () => {
@@ -74,7 +75,19 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('button', { name: 'Close navigation menu' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('navigation', { name: 'Mobile navigation' })).toBeVisible();
     expect(screen.getByRole('navigation', { name: 'Mobile navigation' }).querySelector('a[href="https://account.ckconflux.com"]')).toHaveTextContent('My Account');
+    expect(screen.getByRole('navigation', { name: 'Mobile navigation' }).querySelector('a[href="/join"]')).toHaveTextContent('Join CK Conflux');
+    expect(screen.getByRole('navigation', { name: 'Mobile navigation' }).querySelector('a[href="https://element.ckconflux.com"]')).toHaveTextContent('Open Element');
     fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveFocus();
+  });
+
+  it('closes mobile navigation after following the Join path', () => {
+    renderPath('/');
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation menu' }));
+    const mobileNavigation = screen.getByRole('navigation', { name: 'Mobile navigation' });
+    fireEvent.click(mobileNavigation.querySelector('a[href="/join"]'));
+    expect(window.location.pathname).toBe('/join');
     expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute('aria-expanded', 'false');
   });
 

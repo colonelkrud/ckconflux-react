@@ -1,6 +1,6 @@
 import { ExternalLink, SiteLink } from './SiteLink';
 import MobileNavigation from './MobileNavigation';
-import { ACCOUNT_PORTAL_URL } from '../config/community';
+import { ACCOUNT_PORTAL_URL, ELEMENT_URL } from '../config/community';
 
 const primaryLinks = [
   { label: 'Why CK Conflux', to: '/why-ck-conflux' }, { label: 'Matrix', to: '/matrix' },
@@ -14,8 +14,9 @@ export default function Header() {
         {primaryLinks.map((link) => <SiteLink key={link.to} to={link.to} className="rounded transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">{link.label}</SiteLink>)}
       </nav>
       <ExternalLink href={ACCOUNT_PORTAL_URL} className="hidden rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 lg:inline-flex">My Account</ExternalLink>
-      <ExternalLink href="https://element.ckconflux.com" className="rounded-xl bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/25 transition motion-safe:hover:-translate-y-0.5">Open Element</ExternalLink>
-      <MobileNavigation links={[...primaryLinks, { label: 'My Account', to: ACCOUNT_PORTAL_URL, external: true }]} />
+      <ExternalLink href={ELEMENT_URL} className="hidden rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10 sm:inline-flex">Open Element</ExternalLink>
+      <SiteLink to="/join" className="hidden rounded-xl bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/25 transition motion-safe:hover:-translate-y-0.5 lg:inline-flex">Join CK Conflux</SiteLink>
+      <MobileNavigation links={[{ label: 'Join CK Conflux', to: '/join' }, ...primaryLinks, { label: 'Open Element', to: ELEMENT_URL, external: true }, { label: 'My Account', to: ACCOUNT_PORTAL_URL, external: true }]} />
     </div>
   </header>;
 }
