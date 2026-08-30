@@ -11,6 +11,7 @@ const ALIASES = Object.entries(COMPONENTS)
   .flatMap(([id, component]) => component.aliases.map((alias) => ({ alias, id })))
   .sort((a, b) => b.alias.length - a.alias.length);
 const STATE_PRIORITY = { operational: 0, unknown: 1, degraded: 2, unavailable: 3 };
+const CONTRACT_STATES = new Set(['ok', 'degraded', 'down', 'unknown']);
 
 export const STATUS_ENDPOINT = '/status.json';
 export const INDEPENDENT_STATUS_URL = 'https://status.ckconflux.com';
@@ -51,17 +52,31 @@ function overallState(states) {
   return states.reduce((worst, state) => STATE_PRIORITY[state] > STATE_PRIORITY[worst] ? state : worst, 'operational');
 }
 
+function isCurrentContractPayload(payload) {
+  const rawStatus = typeof payload.status === 'string' ? payload.status.toLowerCase().trim() : null;
+  return Boolean(
+    payload.checks
+    && typeof payload.checks === 'object'
+    && !Array.isArray(payload.checks)
+    && typeof payload.stale === 'boolean'
+    && rawStatus
+    && CONTRACT_STATES.has(rawStatus),
+  );
+}
+
 export function parseStatus(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  const currentContract = isCurrentContractPayload(payload);
   const explicitSource = payload.components ?? payload.services ?? payload.checks;
   const source = explicitSource ?? Object.fromEntries(
     Object.entries(payload).filter(([key]) => canonicalComponent(key)),
   );
-  if (!source || (typeof source !== 'object') || (Array.isArray(source) && source.length === 0)) return null;
+  if (!source || typeof source !== 'object') return null;
+
   const entries = Array.isArray(source)
     ? source.map((item) => [item?.name ?? item?.component ?? item?.id, item])
     : Object.entries(source);
-  if (!entries.length) return null;
+  if (!entries.length && !currentContract) return null;
 
   const byId = new Map();
   entries.forEach(([key, value]) => {
@@ -73,13 +88,28 @@ export function parseStatus(payload) {
   const components = [...byId.values()]
     .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
     .map(({ id, name, state }) => ({ id, name, state }));
-  if (!components.length) return null;
+
   const generatedAt = payload.generatedAt ?? payload.generated_at ?? payload.updatedAt ?? payload.updated_at ?? payload.timestamp ?? null;
   const states = components.map(({ state }) => state);
   const feedStateValue = payload.status ?? payload.state ?? payload.health;
   if (feedStateValue !== undefined && feedStateValue !== null) states.push(healthState(feedStateValue));
   const overall = overallState(states);
-  return { overall, components, generatedAt };
+  const snapshotAgeValue = payload.snapshotAgeSeconds ?? payload.snapshot_age_seconds;
+  const snapshotAgeSeconds = typeof snapshotAgeValue === 'number' && Number.isFinite(snapshotAgeValue) && snapshotAgeValue >= 0
+    ? snapshotAgeValue
+    : null;
+  const messages = Array.isArray(payload.messages)
+    ? payload.messages.filter((message) => typeof message === 'string' && message.trim()).map((message) => message.trim())
+    : [];
+
+  return {
+    overall,
+    components,
+    generatedAt,
+    snapshotAgeSeconds,
+    stale: payload.stale === true,
+    messages,
+  };
 }
 
 export const stateLabel = (state) => ({ operational: 'Operational', degraded: 'Degraded', unavailable: 'Unavailable', unknown: 'Unknown' }[state] ?? 'Unknown');
