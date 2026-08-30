@@ -12,6 +12,10 @@ const ALIASES = Object.entries(COMPONENTS)
   .sort((a, b) => b.alias.length - a.alias.length);
 const STATE_PRIORITY = { operational: 0, unknown: 1, degraded: 2, unavailable: 3 };
 const CONTRACT_STATES = new Set(['ok', 'degraded', 'down', 'unknown']);
+const LEGACY_METADATA_KEYS = new Set([
+  'status', 'state', 'health', 'generatedat', 'updatedat', 'timestamp',
+  'snapshotageseconds', 'stale', 'messages', 'message',
+]);
 
 export const STATUS_ENDPOINT = '/status.json';
 export const INDEPENDENT_STATUS_URL = 'https://status.ckconflux.com';
@@ -30,14 +34,24 @@ export function healthState(value) {
   return 'unknown';
 }
 
+function normalizedKey(key) {
+  return String(key ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 function canonicalComponent(key) {
-  const normalized = String(key ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalized = normalizedKey(key);
   return ALIASES.find(({ alias }) => normalized === alias || normalized.includes(alias)) ?? null;
+}
+
+function isLegacyHealthEntry(key, value) {
+  if (canonicalComponent(key)) return true;
+  if (LEGACY_METADATA_KEYS.has(normalizedKey(key))) return false;
+  return healthState(value) !== 'unknown';
 }
 
 function normalizeComponent(key) {
   const raw = String(key ?? '').trim();
-  const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalized = normalizedKey(raw);
   const match = canonicalComponent(raw);
   if (match) return { id: match.id, name: COMPONENTS[match.id].name, order: COMPONENTS[match.id].order };
   const infrastructureName = /(kubernetes|deployment|namespace|\bpod\b|worker|internal)/i.test(raw);
@@ -69,7 +83,7 @@ export function parseStatus(payload) {
   const currentContract = isCurrentContractPayload(payload);
   const explicitSource = payload.components ?? payload.services ?? payload.checks;
   const source = explicitSource ?? Object.fromEntries(
-    Object.entries(payload).filter(([key]) => canonicalComponent(key)),
+    Object.entries(payload).filter(([key, value]) => isLegacyHealthEntry(key, value)),
   );
   if (!source || typeof source !== 'object') return null;
 
