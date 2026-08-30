@@ -26,7 +26,7 @@ export default function StatusSummary() {
       ? 'Messaging and sign-in remain operational.'
       : 'Other services may remain operational; view details for the full status.')
     : status.phase === 'ready' && affected.length > 1 ? `${affected.length} services are affected.` : null;
-  const freshness = status.phase === 'ready' && !supporting
+  const freshness = status.phase === 'ready'
     ? relativeUpdateLabel(status.generatedAt || status.checkedAt)
     : null;
 
@@ -35,6 +35,7 @@ export default function StatusSummary() {
     <p className="mt-2 text-lg font-semibold text-white" aria-live="polite">{message}</p>
     {supporting && <p className="mt-1 text-sm text-slate-300">{supporting}</p>}
     {freshness && <p className="mt-1 text-sm text-slate-400">{freshness}</p>}
+    {status.stale && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">Unable to refresh. Showing the last known status; it may be out of date.</p>}
     <Link to="/status" className="mt-3 inline-flex text-sm font-semibold text-cyan-200 hover:text-cyan-100">View details →</Link>
   </div>;
 }
