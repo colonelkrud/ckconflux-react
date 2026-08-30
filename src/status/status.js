@@ -10,7 +10,7 @@ const COMPONENTS = {
 const ALIASES = Object.entries(COMPONENTS)
   .flatMap(([id, component]) => component.aliases.map((alias) => ({ alias, id })))
   .sort((a, b) => b.alias.length - a.alias.length);
-const STATE_PRIORITY = { unknown: 0, operational: 1, degraded: 2, unavailable: 3 };
+const STATE_PRIORITY = { operational: 0, unknown: 1, degraded: 2, unavailable: 3 };
 
 export const STATUS_ENDPOINT = '/status.json';
 export const INDEPENDENT_STATUS_URL = 'https://status.ckconflux.com';
@@ -29,10 +29,15 @@ export function healthState(value) {
   return 'unknown';
 }
 
+function canonicalComponent(key) {
+  const normalized = String(key ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return ALIASES.find(({ alias }) => normalized === alias || normalized.includes(alias)) ?? null;
+}
+
 function normalizeComponent(key) {
   const raw = String(key ?? '').trim();
   const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const match = ALIASES.find(({ alias }) => normalized === alias || normalized.includes(alias));
+  const match = canonicalComponent(raw);
   if (match) return { id: match.id, name: COMPONENTS[match.id].name, order: COMPONENTS[match.id].order };
   const infrastructureName = /(kubernetes|deployment|namespace|\bpod\b|worker|internal)/i.test(raw);
   const name = infrastructureName ? 'Additional service' : raw
@@ -41,9 +46,17 @@ function normalizeComponent(key) {
   return { id: `other-${normalized || 'unknown'}`, name, order: 100 };
 }
 
+function overallState(states) {
+  if (!states.length) return 'unknown';
+  return states.reduce((worst, state) => STATE_PRIORITY[state] > STATE_PRIORITY[worst] ? state : worst, 'operational');
+}
+
 export function parseStatus(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
-  const source = payload.components ?? payload.services ?? payload.checks;
+  const explicitSource = payload.components ?? payload.services ?? payload.checks;
+  const source = explicitSource ?? Object.fromEntries(
+    Object.entries(payload).filter(([key]) => canonicalComponent(key)),
+  );
   if (!source || (typeof source !== 'object') || (Array.isArray(source) && source.length === 0)) return null;
   const entries = Array.isArray(source)
     ? source.map((item) => [item?.name ?? item?.component ?? item?.id, item])
@@ -63,7 +76,9 @@ export function parseStatus(payload) {
   if (!components.length) return null;
   const generatedAt = payload.generatedAt ?? payload.generated_at ?? payload.updatedAt ?? payload.updated_at ?? payload.timestamp ?? null;
   const states = components.map(({ state }) => state);
-  const overall = states.includes('unavailable') ? 'unavailable' : states.includes('degraded') ? 'degraded' : states.every((state) => state === 'operational') ? 'operational' : 'unknown';
+  const feedStateValue = payload.status ?? payload.state ?? payload.health;
+  if (feedStateValue !== undefined && feedStateValue !== null) states.push(healthState(feedStateValue));
+  const overall = overallState(states);
   return { overall, components, generatedAt };
 }
 
