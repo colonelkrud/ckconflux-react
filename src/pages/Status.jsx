@@ -9,7 +9,7 @@ import {
 import { useLocalStatus } from '../status/useLocalStatus';
 
 const DETAILS = {
-  operational: 'Messaging, sign-in, calls, media, and account services are reporting healthy.',
+  operational: 'All reported services are healthy.',
   degraded: 'CK Conflux is available, but one or more services may not work normally.',
   unavailable: 'One or more CK Conflux services are currently unavailable.',
   unknown: 'Some service checks returned an unknown state.',
