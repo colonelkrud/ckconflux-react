@@ -10,7 +10,12 @@ export const ACCOUNT_PORTAL_URL = 'https://account.ckconflux.com';
 export const MASTODON_SERVICE_URL = 'https://masto.colonelkrud.com';
 export const ELEMENT_URL = 'https://element.ckconflux.com';
 export const PASSWORD_RECOVERY_URL = `${ELEMENT_URL}/#/forgot_password`;
-export const ELEMENT_IDENTITY_RESET_GUIDE_URL = 'https://docs.element.io/latest/element-support/matrix-account-management/managing-a-matrix-account/#resetting-your-identity';
+export const ELEMENT_RECOVERY_GUIDES = Object.freeze({
+  noRecoveryMethod: 'https://docs.element.io/latest/element-support/matrix-account-management/resetting-your-identity/',
+  recoveryKey: 'https://docs.element.io/latest/element-support/matrix-account-management/secure-backup/',
+  newSession: 'https://docs.element.io/latest/element-support/matrix-account-management/verifying-a-new-login/',
+  anotherUser: 'https://docs.element.io/latest/element-support/matrix-rooms/room-members/verifying-a-user/',
+});
 export const SUPPORTER_URL = 'https://buymeacoffee.com/conflux';
 
 const contact = (email) => Object.freeze({ email, mailto: `mailto:${email}` });
