@@ -74,6 +74,18 @@ describe('status payload normalization', () => {
     });
   });
 
+  it('rejects empty completed contract snapshots', () => {
+    expect(parseStatus({
+      status: 'ok',
+      generated_at: '2026-08-30T18:00:00Z',
+      snapshot_age_seconds: 5,
+      stale: false,
+      messages: [],
+      checks: {},
+    })).toBeNull();
+    expect(parseStatus({ status: 'degraded', stale: false, checks: {} })).toBeNull();
+  });
+
   it('aggregates unavailable ahead of degraded', () => {
     expect(parseStatus({ services: { matrix: 'degraded', calls: 'failed' } }).overall).toBe('unavailable');
   });
@@ -140,7 +152,7 @@ describe('status payload normalization', () => {
     expect(parsed.snapshotAgeSeconds).toBe(30);
   });
 
-  it('rejects JSON without meaningful component data or the current structured contract', () => {
+  it('rejects JSON without meaningful component data or the explicit no-snapshot contract', () => {
     expect(parseStatus({ status: 'degraded', message: 'Synapse degraded' })).toBeNull();
     expect(parseStatus({ checks: {} })).toBeNull();
   });
