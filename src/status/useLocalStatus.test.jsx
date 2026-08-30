@@ -30,6 +30,39 @@ describe('useLocalStatus', () => {
     expect(result.current.overall).toBe('unavailable');
   });
 
+  it('preserves the current contract stale flag on an HTTP 503 healthy snapshot', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'ok',
+      generated_at: '2026-08-30T12:00:00Z',
+      snapshot_age_seconds: 130.5,
+      stale: true,
+      messages: [],
+      checks: { website: 'ok', login: 'ok', matrix: 'ok', media: 'ok', calls: 'ok', membership: 'ok' },
+    }, false)));
+    const { result } = renderHook(() => useLocalStatus());
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    expect(result.current.overall).toBe('operational');
+    expect(result.current.stale).toBe(true);
+    expect(result.current.snapshotAgeSeconds).toBe(130.5);
+    expect(result.current.refreshError).toBe(false);
+  });
+
+  it('accepts the structured unavailable startup snapshot as status data', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'unknown',
+      generated_at: null,
+      snapshot_age_seconds: null,
+      stale: true,
+      messages: ['Status snapshot is not yet available'],
+      checks: {},
+    }, false)));
+    const { result } = renderHook(() => useLocalStatus());
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    expect(result.current.overall).toBe('unknown');
+    expect(result.current.stale).toBe(true);
+    expect(result.current.components).toEqual([]);
+  });
+
   it.each([
     ['malformed JSON', () => Promise.resolve({ ok: true, json: () => Promise.reject(new SyntaxError()) })],
     ['unrecognized JSON', () => Promise.resolve(response({ status: 'down', error: 'backend error' }, false))],
