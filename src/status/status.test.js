@@ -115,6 +115,31 @@ describe('status payload normalization', () => {
     ]);
   });
 
+  it('preserves health-like custom top-level states without treating metadata as components', () => {
+    const parsed = parseStatus({
+      website: 'up',
+      bridgeService: 'down',
+      generated_at: '2026-08-30T12:00:00Z',
+      snapshot_age_seconds: 30,
+      stale: true,
+      messages: ['Legacy payload'],
+    });
+
+    expect(parsed.overall).toBe('unavailable');
+    expect(parsed.components).toEqual([
+      { id: 'website', name: 'Website', state: 'operational' },
+      { id: 'other-bridgeservice', name: 'Bridge Service', state: 'unavailable' },
+    ]);
+    expect(parsed.components.map(({ id }) => id)).not.toEqual(expect.arrayContaining([
+      'other-stale',
+      'other-snapshotageseconds',
+      'other-generatedat',
+      'other-messages',
+    ]));
+    expect(parsed.stale).toBe(true);
+    expect(parsed.snapshotAgeSeconds).toBe(30);
+  });
+
   it('rejects JSON without meaningful component data or the current structured contract', () => {
     expect(parseStatus({ status: 'degraded', message: 'Synapse degraded' })).toBeNull();
     expect(parseStatus({ checks: {} })).toBeNull();
