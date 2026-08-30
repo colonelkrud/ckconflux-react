@@ -1,9 +1,9 @@
-import { PUBLIC_CONTACTS } from '../config/community';
+import { PUBLIC_CONTACTS, SUPPORTER_URL } from '../config/community';
 import { Link } from '../router/Router';
 
 const REGISTER_URL = 'https://element.ckconflux.com/#/register';
 const steps = [
-  ['Get a registration token', <>Ask an existing CK Conflux member to share a token with you privately, outside Element, or obtain one through a supported tier on <a className="font-semibold text-cyan-200 underline" href="https://buymeacoffee.com/conflux">Buy Me a Coffee</a>. A token is required and may be revoked if it is shared publicly or used for abuse, spam, or policy violations.</>],
+  ['Get a registration token', <>Invitation from an existing CK Conflux member is one path: ask them to share a token with you privately, outside Element. Voluntarily supporting CK Conflux through <a className="font-semibold text-cyan-200 underline" href={SUPPORTER_URL}>Buy Me a Coffee</a> may be another supported path to receive a token. Payment is not required to join. A token is required and may be revoked if it is shared publicly or used for abuse, spam, or policy violations.</>],
   ['Have your details ready', <>Registration will ask for your token, an available username, an email address, and an account password. Review the <Link className="font-semibold text-cyan-200 underline" to="/terms">Terms</Link> and <Link className="font-semibold text-cyan-200 underline" to="/rules">Server Rules</Link> before continuing.</>],
   ['Register in Element', <>Use the button below to continue to Element. Element and the Matrix Authentication Service (MAS)—not this public guide—handle the actual registration and account credentials.</>],
   ['Verify your email', <>Open the verification message and follow its link. The required email confirms that you control the address used for the account and makes the enabled password-recovery path possible. Check spam or junk folders if it does not arrive.</>],

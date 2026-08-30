@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Link } from '../router/Router';
-import { ACCOUNT_PORTAL_URL, MASTODON_SERVICE_URL, PASSWORD_RECOVERY_URL, PUBLIC_CONTACTS } from '../config/community';
+import { ACCOUNT_PORTAL_URL, MASTODON_SERVICE_URL, PASSWORD_RECOVERY_URL, PUBLIC_CONTACTS, SUPPORTER_URL } from '../config/community';
 
 function AccordionItem({ title, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -48,7 +48,7 @@ const faqItems = [
   { q: 'How does federation work?', a: <p>Your CK Conflux MXID can join compatible federated rooms when room and server policies allow. Participating homeservers exchange the data required for the room, and CK Conflux does not control third-party servers.</p> },
   { q: 'How do I report, ignore, or block someone?', a: <p>Open the message or user actions in your client to report, ignore, or block. Include room links, timestamps, and relevant context in a report. Blocking or ignoring changes your experience; reporting asks moderators to review conduct under the <Link className="font-semibold text-cyan-200 underline" to="/rules">Rules</Link>. Encrypted reports may require you to provide the content moderators need.</p> },
   { q: 'Do messages and media stay forever?', a: <p>Do not assume indefinite retention. Storage and retention vary by service, room, account state, operations, and federation. Encrypted Matrix media may be stored as ciphertext; this does not mean the server can scan every upload in plaintext. See <Link className="font-semibold text-cyan-200 underline" to="/privacy">Privacy</Link>.</p> },
-  { q: 'How do registration codes work?', a: <p>Share a registration code privately, outside Element. A friend enters it during registration. Codes may be revoked for abuse, spam, or policy violations. Existing members or a supported tier at <a className="font-semibold text-cyan-200 underline" href="https://buymeacoffee.com/conflux">Buy Me a Coffee</a> may provide a token.</p> },
+  { q: 'How do registration codes work?', a: <p>Share a registration code privately, outside Element. A friend enters it during registration. Codes may be revoked for abuse, spam, or policy violations. An invitation from an existing member and voluntarily supporting through <a className="font-semibold text-cyan-200 underline" href={SUPPORTER_URL}>Buy Me a Coffee</a> are separate supported paths; payment is not required to join.</p> },
   { q: 'What about Mastodon or TeamSpeak support?', a: <p><a className="font-semibold text-cyan-200 underline" href={MASTODON_SERVICE_URL}>Open CK Conflux Mastodon</a> to use the secondary supported social service. Mastodon reports use the post or account report menu; mute and block are also available. TeamSpeak is a separate beta service: provide admins the username, channel, and incident time when reporting. Its identity and recovery are separate from Matrix. See the <Link className="font-semibold text-cyan-200 underline" to="/teamspeak">TeamSpeak page</Link>.</p> },
 ];
 
