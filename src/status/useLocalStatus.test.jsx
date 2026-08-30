@@ -23,6 +23,13 @@ describe('useLocalStatus', () => {
     expect(result.current.overall).toBe(overall);
   });
 
+  it('honors an explicit feed-level outage even when component checks are healthy', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ status: 'unavailable', checks: { website: 'ok', matrix: 'ok' } }, false)));
+    const { result } = renderHook(() => useLocalStatus());
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    expect(result.current.overall).toBe('unavailable');
+  });
+
   it.each([
     ['malformed JSON', () => Promise.resolve({ ok: true, json: () => Promise.reject(new SyntaxError()) })],
     ['unrecognized JSON', () => Promise.resolve(response({ status: 'down', error: 'backend error' }, false))],
