@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseStatus, STATUS_ENDPOINT } from './status';
 
-const EMPTY_RESULT = { phase: 'loading', overall: 'unknown', components: [], generatedAt: null, checkedAt: null, isRefreshing: false, stale: false, refreshError: false };
+const EMPTY_RESULT = {
+  phase: 'loading',
+  overall: 'unknown',
+  components: [],
+  generatedAt: null,
+  snapshotAgeSeconds: null,
+  messages: [],
+  checkedAt: null,
+  isRefreshing: false,
+  stale: false,
+  refreshError: false,
+};
 
 export function useLocalStatus({ refreshIntervalMs = 0, timeoutMs = 8000 } = {}) {
   const [result, setResult] = useState(EMPTY_RESULT);
@@ -19,7 +30,13 @@ export function useLocalStatus({ refreshIntervalMs = 0, timeoutMs = 8000 } = {})
       const parsed = parseStatus(await response.json());
       if (!parsed) throw new Error('Unrecognized status payload');
       if (mounted.current && activeController.current === controller) {
-        setResult({ phase: 'ready', ...parsed, checkedAt: new Date().toISOString(), isRefreshing: false, stale: false, refreshError: false });
+        setResult({
+          phase: 'ready',
+          ...parsed,
+          checkedAt: new Date().toISOString(),
+          isRefreshing: false,
+          refreshError: false,
+        });
       }
     } catch {
       if (mounted.current && activeController.current === controller) {
