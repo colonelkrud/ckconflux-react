@@ -67,4 +67,14 @@ describe('Status page', () => {
     expect(screen.queryByRole('heading', { name: "We couldn't retrieve CK Conflux service health" })).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Current platform health could not be confirmed.');
   });
+
+  it('uses neutral incomplete wording when only the feed-level state is unknown', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ status: 'unknown', checks: { website: 'ok' } })));
+    render(<Status />);
+
+    expect(await screen.findByRole('heading', { name: 'Status information incomplete' })).toBeInTheDocument();
+    expect(screen.getByText('Status information is incomplete; the status feed did not confirm a complete platform state.')).toBeInTheDocument();
+    expect(screen.queryByText('Some service checks returned an unknown state.')).not.toBeInTheDocument();
+    expect(screen.getByText('Website').closest('li')).toHaveTextContent('Operational');
+  });
 });
