@@ -78,9 +78,16 @@ function isCurrentContractPayload(payload) {
   );
 }
 
+function isNoSnapshotPayload(payload) {
+  return isCurrentContractPayload(payload)
+    && payload.status.toLowerCase().trim() === 'unknown'
+    && payload.stale === true
+    && Object.keys(payload.checks).length === 0;
+}
+
 export function parseStatus(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
-  const currentContract = isCurrentContractPayload(payload);
+  const noSnapshot = isNoSnapshotPayload(payload);
   const explicitSource = payload.components ?? payload.services ?? payload.checks;
   const source = explicitSource ?? Object.fromEntries(
     Object.entries(payload).filter(([key, value]) => isLegacyHealthEntry(key, value)),
@@ -90,7 +97,7 @@ export function parseStatus(payload) {
   const entries = Array.isArray(source)
     ? source.map((item) => [item?.name ?? item?.component ?? item?.id, item])
     : Object.entries(source);
-  if (!entries.length && !currentContract) return null;
+  if (!entries.length && !noSnapshot) return null;
 
   const byId = new Map();
   entries.forEach(([key, value]) => {
