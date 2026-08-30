@@ -2,45 +2,36 @@ import { describe, expect, it } from 'vitest';
 import { parseStatus } from './status';
 
 describe('status payload normalization', () => {
-  it('keeps Matrix messaging and MatrixRTC call health distinct', () => {
-    const parsed = parseStatus({
-      components: {
-        matrix: 'up',
-        matrixrtc: 'degraded',
-      },
-    });
-
+  it('normalizes labels, keeps messaging and calls distinct, and uses preferred order', () => {
+    const parsed = parseStatus({ components: { website: 'up', matrixrtc: 'degraded', login: 'ok', matrix: 'up', media: 'healthy', membership: 'passing' } });
     expect(parsed.overall).toBe('degraded');
     expect(parsed.components).toEqual([
-      { name: 'Matrix messaging', state: 'operational' },
-      { name: 'Voice / video calls', state: 'degraded' },
+      { id: 'messaging', name: 'Messaging', state: 'operational' },
+      { id: 'signin', name: 'Sign in', state: 'operational' },
+      { id: 'calls', name: 'Voice & video', state: 'degraded' },
+      { id: 'media', name: 'Media & uploads', state: 'operational' },
+      { id: 'account', name: 'Account & membership', state: 'operational' },
+      { id: 'website', name: 'Website', state: 'operational' },
     ]);
   });
 
-  it('includes unknown components in the aggregate instead of dropping them', () => {
-    const parsed = parseStatus({
-      components: {
-        website: 'up',
-        bridgeService: 'down',
-      },
-    });
-
-    expect(parsed.overall).toBe('unavailable');
-    expect(parsed.components).toContainEqual({ name: 'Bridge Service', state: 'unavailable' });
+  it('aggregates unavailable ahead of degraded', () => {
+    expect(parseStatus({ services: { matrix: 'degraded', calls: 'failed' } }).overall).toBe('unavailable');
   });
 
-  it('normalizes the production login check and TeamSpeak component', () => {
-    const parsed = parseStatus({
-      checks: {
-        login: 'ok',
-        teamspeak: 'degraded',
-      },
-    });
+  it('includes unknown future components safely instead of dropping them', () => {
+    const parsed = parseStatus({ components: { website: 'up', bridgeService: 'mystery' } });
+    expect(parsed.overall).toBe('unknown');
+    expect(parsed.components).toContainEqual({ id: 'other-bridgeservice', name: 'Bridge Service', state: 'unknown' });
+  });
 
-    expect(parsed.overall).toBe('degraded');
-    expect(parsed.components).toEqual([
-      { name: 'Sign-in / authentication', state: 'operational' },
-      { name: 'TeamSpeak', state: 'degraded' },
-    ]);
+  it('uses the least healthy state when aliases describe the same category', () => {
+    const parsed = parseStatus({ checks: { login: 'ok', authentication: 'down' } });
+    expect(parsed.components).toEqual([{ id: 'signin', name: 'Sign in', state: 'unavailable' }]);
+  });
+
+  it('rejects JSON without meaningful component data', () => {
+    expect(parseStatus({ status: 'degraded', message: 'Synapse degraded' })).toBeNull();
+    expect(parseStatus({ checks: {} })).toBeNull();
   });
 });

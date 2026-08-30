@@ -1,19 +1,75 @@
 import { ExternalLink } from '../components/SiteLink';
-import { INDEPENDENT_STATUS_URL, stateLabel } from '../status/status';
+import {
+  INDEPENDENT_STATUS_BADGE_LINK,
+  INDEPENDENT_STATUS_BADGE_URL,
+  INDEPENDENT_STATUS_URL,
+  stateLabel,
+  statusHeadline,
+} from '../status/status';
 import { useLocalStatus } from '../status/useLocalStatus';
 
+const DETAILS = {
+  operational: 'Messaging, sign-in, calls, media, and account services are reporting healthy.',
+  degraded: 'CK Conflux is available, but one or more services may not work normally.',
+  unavailable: 'One or more CK Conflux services are currently unavailable.',
+  unknown: 'Some service checks returned an unknown state.',
+};
+const IMPACT = {
+  messaging: 'Sending or receiving messages may be delayed or fail.',
+  signin: 'Signing in or creating an account may fail.',
+  calls: 'Calls may fail to connect or may be disrupted.',
+  media: 'Uploading or retrieving files and images may fail.',
+  account: 'My Account or membership-related workflows may be unavailable.',
+  website: 'CK Conflux public web pages may be partially unavailable.',
+};
+const ICONS = { operational: '✓', degraded: '!', unavailable: '×', unknown: '?' };
+const STATE_STYLE = {
+  operational: 'border-emerald-300/30 bg-emerald-400/10 text-emerald-100',
+  degraded: 'border-amber-300/40 bg-amber-400/10 text-amber-100',
+  unavailable: 'border-rose-300/40 bg-rose-400/10 text-rose-100',
+  unknown: 'border-slate-300/30 bg-slate-400/10 text-slate-100',
+};
+
+function relativeTime(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return null;
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return 'Updated just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `Updated ${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  return `Updated ${hours} hour${hours === 1 ? '' : 's'} ago`;
+}
+
+function Freshness({ status }) {
+  const timestamp = status.generatedAt || status.checkedAt;
+  const date = timestamp ? new Date(timestamp) : null;
+  const valid = date && !Number.isNaN(date.getTime());
+  if (!valid) return null;
+  return <p className="text-sm text-slate-300">
+    <time dateTime={timestamp} title={date.toLocaleString()}>{relativeTime(timestamp)}</time>
+    {!status.generatedAt && <span className="text-slate-400"> (last checked)</span>}
+  </p>;
+}
+
 export default function Status() {
-  const status = useLocalStatus();
-  const unknown = status.phase === 'error';
-  const generatedDate = status.generatedAt ? new Date(status.generatedAt) : null;
-  const generatedLabel = generatedDate && !Number.isNaN(generatedDate.getTime()) ? generatedDate.toLocaleString() : String(status.generatedAt ?? '');
+  const status = useLocalStatus({ refreshIntervalMs: 60000 });
+  const error = status.phase === 'error';
   return <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    <header className="max-w-3xl"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Availability</p><h1 className="mt-2 text-3xl font-semibold text-white sm:text-4xl">Service status</h1><p className="mt-4 leading-7 text-slate-300">Current health reported from inside the CK Conflux platform.</p></header>
-    <section className="mt-8 rounded-2xl border border-cyan-300/20 bg-cyan-400/5 p-6" aria-labelledby="independent-status"><h2 id="independent-status" className="text-xl font-semibold text-white">Can’t reach CK Conflux?</h2><p className="mt-2 max-w-3xl leading-7 text-slate-300">Our independent, out-of-band status page is hosted separately and remains the place to check when CK Conflux itself is unreachable.</p><ExternalLink href={INDEPENDENT_STATUS_URL} className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950">Open independent status page</ExternalLink></section>
-    <section className="mt-8" aria-labelledby="local-status"><h2 id="local-status" className="text-2xl font-semibold text-white">In-platform health</h2>
-      {status.phase === 'loading' && <div className="mt-4 min-h-28 rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-300" role="status">Checking local status…</div>}
-      {unknown && <div className="mt-4 min-h-28 rounded-2xl border border-amber-300/30 bg-amber-400/5 p-5"><h3 className="font-semibold text-amber-100">Local status unavailable / unknown</h3><p className="mt-2 text-sm leading-6 text-slate-300">The in-platform status response failed, timed out, was malformed, or did not contain recognized component data. Check the independent status page above.</p></div>}
-      {status.phase === 'ready' && <><p className="mt-3 text-lg font-semibold text-white">Overall: {stateLabel(status.overall)}</p>{status.generatedAt && <p className="mt-1 text-sm text-slate-400">Status payload updated: <time dateTime={status.generatedAt}>{generatedLabel}</time></p>}<ul className="mt-4 grid gap-3 sm:grid-cols-2">{status.components.map((component) => <li key={component.name} className="flex min-h-16 items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"><span className="text-slate-200">{component.name}</span><strong className="text-white">{stateLabel(component.state)}</strong></li>)}</ul></>}
+    <header className="max-w-3xl"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Availability</p><h1 className="mt-2 text-3xl font-semibold text-white sm:text-4xl">Service status</h1><p className="mt-4 leading-7 text-slate-300">Current user-facing health reported by CK Conflux.</p></header>
+
+    <section className="mt-8" aria-labelledby="overall-status">
+      <div className="flex flex-wrap items-center justify-between gap-3"><h2 id="overall-status" className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-300">Overall CK Conflux status</h2><button type="button" onClick={status.refresh} disabled={status.isRefreshing} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-cyan-200 disabled:cursor-wait disabled:opacity-60">{status.isRefreshing ? 'Refreshing…' : 'Refresh'}</button></div>
+      {status.phase === 'loading' && <div className="mt-4 min-h-32 rounded-2xl border border-white/10 bg-white/5 p-6 text-slate-300" role="status">Checking CK Conflux service health…</div>}
+      {error && <div className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/10 p-6" role="alert"><div className="flex items-start gap-4"><span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-200 font-bold text-amber-100">!</span><div><h3 className="text-xl font-semibold text-white">We couldn't retrieve CK Conflux service health</h3><p className="mt-2 leading-7 text-slate-200">We couldn't retrieve the CK Conflux status feed. This does not necessarily mean the platform is down. Check independent monitoring below for an outside view.</p></div></div></div>}
+      {status.phase === 'ready' && <div className={`mt-4 rounded-2xl border p-6 ${STATE_STYLE[status.overall]}`}><div className="flex items-start gap-4"><span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-current text-xl font-bold">{ICONS[status.overall]}</span><div><h3 className="text-2xl font-semibold text-white" aria-live="polite" aria-atomic="true">{statusHeadline(status.overall)}</h3><p className="mt-2 leading-7 text-slate-200">{DETAILS[status.overall]}</p><div className="mt-3"><Freshness status={status} /></div>{status.stale && <p className="mt-3 font-semibold text-amber-100" role="status">Unable to refresh. Showing the last known status; it may be out of date.</p>}{status.isRefreshing && <p className="mt-3 text-sm text-slate-300" role="status">Refreshing status…</p>}</div></div></div>}
     </section>
+
+    {status.phase === 'ready' && <section className="mt-10" aria-labelledby="services-status"><h2 id="services-status" className="text-2xl font-semibold text-white">Services</h2><p className="mt-2 text-slate-300">Health is grouped by the CK Conflux features people use.</p><ul className="mt-5 grid gap-3 sm:grid-cols-2">{status.components.map((component) => {
+      const affected = component.state === 'degraded' || component.state === 'unavailable';
+      return <li key={component.id} className={`rounded-xl border p-4 ${affected ? STATE_STYLE[component.state] : 'border-white/10 bg-white/5'}`}><div className="flex items-center justify-between gap-4"><span className="font-medium text-white">{component.name}</span><strong className="flex items-center gap-2 text-sm text-white"><span aria-hidden="true">{ICONS[component.state]}</span>{stateLabel(component.state)}</strong></div>{affected && <p className="mt-3 text-sm leading-6 text-slate-200">{IMPACT[component.id] || 'This service may not work normally.'}</p>}</li>;
+    })}</ul></section>}
+
+    <section className={`mt-10 rounded-2xl border p-6 ${error || status.stale ? 'border-cyan-300/40 bg-cyan-400/10' : 'border-white/10 bg-white/5'}`} aria-labelledby="independent-status"><h2 id="independent-status" className="text-2xl font-semibold text-white">Independent monitoring</h2><p className="mt-3 max-w-3xl leading-7 text-slate-300">CK Conflux service health above is generated from platform and application checks. UptimeRobot independently monitors public CK Conflux endpoints from outside the platform.</p><p className="mt-2 max-w-3xl leading-7 text-slate-300">Use the independent page if CK Conflux itself is unreachable or if you want the outside-in view.</p><ExternalLink href={INDEPENDENT_STATUS_BADGE_LINK} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex" aria-label="View CK Conflux status on independent monitoring (opens in a new tab)"><img src={INDEPENDENT_STATUS_BADGE_URL} alt="CK Conflux independent monitoring status" className="h-7 max-w-full" /></ExternalLink><div><ExternalLink href={INDEPENDENT_STATUS_URL} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950">Open independent status page <span className="sr-only">(opens in a new tab)</span></ExternalLink></div></section>
   </div>;
 }
