@@ -42,7 +42,7 @@ function relativeTime(value) {
 }
 
 function Freshness({ status }) {
-  const timestamp = status.generatedAt || status.checkedAt;
+  const timestamp = status.generatedAt || (!status.stale ? status.checkedAt : null);
   const date = timestamp ? new Date(timestamp) : null;
   const valid = date && !Number.isNaN(date.getTime());
   if (!valid) return null;
@@ -55,6 +55,23 @@ function Freshness({ status }) {
 export default function Status() {
   const status = useLocalStatus({ refreshIntervalMs: 60000 });
   const error = status.phase === 'error';
+  const snapshotMissing = status.phase === 'ready' && status.stale && status.components.length === 0 && !status.generatedAt;
+  const headline = snapshotMissing
+    ? 'Status snapshot unavailable'
+    : status.stale
+      ? 'Status information may be out of date'
+      : statusHeadline(status.overall);
+  const detail = snapshotMissing
+    ? 'CK Conflux has not produced a status snapshot yet. Check independent monitoring below for an outside view.'
+    : status.stale
+      ? `CK Conflux is serving its last completed status snapshot. Last reported state: ${statusHeadline(status.overall)}.`
+      : DETAILS[status.overall];
+  const statusStyle = status.stale ? STATE_STYLE.degraded : STATE_STYLE[status.overall];
+  const statusIcon = status.stale ? '!' : ICONS[status.overall];
+  const staleNotice = snapshotMissing
+    ? 'Current platform health could not be confirmed.'
+    : 'Status snapshot is stale. Showing the last known status; it may be out of date.';
+
   return <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     <header className="max-w-3xl"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Availability</p><h1 className="mt-2 text-3xl font-semibold text-white sm:text-4xl">Service status</h1><p className="mt-4 leading-7 text-slate-300">Current user-facing health reported by CK Conflux.</p></header>
 
@@ -62,10 +79,10 @@ export default function Status() {
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 id="overall-status" className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-300">Overall CK Conflux status</h2><button type="button" onClick={status.refresh} disabled={status.isRefreshing} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-cyan-200 disabled:cursor-wait disabled:opacity-60">{status.isRefreshing ? 'Refreshing…' : 'Refresh'}</button></div>
       {status.phase === 'loading' && <div className="mt-4 min-h-32 rounded-2xl border border-white/10 bg-white/5 p-6 text-slate-300" role="status">Checking CK Conflux service health…</div>}
       {error && <div className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/10 p-6" role="alert"><div className="flex items-start gap-4"><span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-200 font-bold text-amber-100">!</span><div><h3 className="text-xl font-semibold text-white">We couldn't retrieve CK Conflux service health</h3><p className="mt-2 leading-7 text-slate-200">We couldn't retrieve the CK Conflux status feed. This does not necessarily mean the platform is down. Check independent monitoring below for an outside view.</p></div></div></div>}
-      {status.phase === 'ready' && <div className={`mt-4 rounded-2xl border p-6 ${STATE_STYLE[status.overall]}`}><div className="flex items-start gap-4"><span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-current text-xl font-bold">{ICONS[status.overall]}</span><div><h3 className="text-2xl font-semibold text-white" aria-live="polite" aria-atomic="true">{statusHeadline(status.overall)}</h3><p className="mt-2 leading-7 text-slate-200">{DETAILS[status.overall]}</p><div className="mt-3"><Freshness status={status} /></div>{status.stale && <p className="mt-3 font-semibold text-amber-100" role="status">Unable to refresh. Showing the last known status; it may be out of date.</p>}{status.isRefreshing && <p className="mt-3 text-sm text-slate-300" role="status">Refreshing status…</p>}</div></div></div>}
+      {status.phase === 'ready' && <div className={`mt-4 rounded-2xl border p-6 ${statusStyle}`}><div className="flex items-start gap-4"><span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-current text-xl font-bold">{statusIcon}</span><div><h3 className="text-2xl font-semibold text-white" aria-live="polite" aria-atomic="true">{headline}</h3><p className="mt-2 leading-7 text-slate-200">{detail}</p><div className="mt-3"><Freshness status={status} /></div>{status.stale && <p className="mt-3 font-semibold text-amber-100" role="status">{staleNotice}</p>}{status.isRefreshing && <p className="mt-3 text-sm text-slate-300" role="status">Refreshing status…</p>}</div></div></div>}
     </section>
 
-    {status.phase === 'ready' && <section className="mt-10" aria-labelledby="services-status"><h2 id="services-status" className="text-2xl font-semibold text-white">Services</h2><p className="mt-2 text-slate-300">Health is grouped by the CK Conflux features people use.</p><ul className="mt-5 grid gap-3 sm:grid-cols-2">{status.components.map((component) => {
+    {status.phase === 'ready' && status.components.length > 0 && <section className="mt-10" aria-labelledby="services-status"><h2 id="services-status" className="text-2xl font-semibold text-white">Services</h2><p className="mt-2 text-slate-300">Health is grouped by the CK Conflux features people use.</p><ul className="mt-5 grid gap-3 sm:grid-cols-2">{status.components.map((component) => {
       const affected = component.state === 'degraded' || component.state === 'unavailable';
       return <li key={component.id} className={`rounded-xl border p-4 ${affected ? STATE_STYLE[component.state] : 'border-white/10 bg-white/5'}`}><div className="flex items-center justify-between gap-4"><span className="font-medium text-white">{component.name}</span><strong className="flex items-center gap-2 text-sm text-white"><span aria-hidden="true">{ICONS[component.state]}</span>{stateLabel(component.state)}</strong></div>{affected && <p className="mt-3 text-sm leading-6 text-slate-200">{IMPACT[component.id] || 'This service may not work normally.'}</p>}</li>;
     })}</ul></section>}
