@@ -103,6 +103,27 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getAllByRole('link', { name: 'Open Element' }).some((link) => link.getAttribute('href') === 'https://element.ckconflux.com')).toBe(true);
   });
 
+  it('explains media constraints and lifecycle without promising permanent or global retention', () => {
+    renderPath('/membership');
+    expect(screen.getByText(/Community per-file limit:/i)).toHaveTextContent('100 MB');
+    expect(screen.getByText(/This applies to each individual upload/i)).toHaveTextContent(/10 GiB total capacity does not permit one file that large/i);
+    expect(screen.getByText(/higher backend technical ceiling/i)).toHaveTextContent(/not a user entitlement/i);
+    expect(screen.getByText(/CK Conflux local media lifecycle:/i)).toHaveTextContent('1 year');
+    expect(screen.getByText(/Federated media cache lifecycle:/i).closest('p')).toHaveTextContent(/2 days.*does not necessarily delete the original/i);
+    expect(screen.getByText(/Federation means CK Conflux cannot promise global deletion/i)).toHaveTextContent(/outside CK Conflux’s unilateral control/i);
+    expect(screen.getByText(/Encrypted Matrix media may be stored as ciphertext/i)).toHaveTextContent(/does not imply CK Conflux can inspect its plaintext/i);
+    expect(screen.getByText(/durable allocated account and media capacity/i)).toHaveTextContent(/does not mean permanent or stored forever/i);
+    expect(screen.getByText(/CK Conflux local media lifecycle:/i).closest('p')).toHaveTextContent(/not a promise of permanent retention/i);
+  });
+
+  it('offers a voluntary supporter path while My Account remains authoritative', () => {
+    renderPath('/membership');
+    expect(screen.getByRole('link', { name: 'Support CK Conflux' })).toHaveAttribute('href', 'https://buymeacoffee.com/conflux');
+    expect(screen.getByText(/Support is voluntary/i)).toHaveTextContent(/Critical messaging, calls, and community participation remain free/i);
+    expect(screen.getByText(/Membership, storage, and account administration/)).toHaveTextContent(/My Account is authoritative/i);
+    expect(document.body).not.toHaveTextContent(/\$\d+|per month|supporter tier.*GiB/i);
+  });
+
   it('does not request authenticated account state from the public membership page', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     renderPath('/membership');
@@ -217,6 +238,7 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('heading', { name: 'Why require a token?' })).toBeInTheDocument();
     expect(screen.getByText(/existing CK Conflux member/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Buy Me a Coffee' })).toHaveAttribute('href', 'https://buymeacoffee.com/conflux');
+    expect(screen.getByText(/Invitation from an existing CK Conflux member is one path/i)).toHaveTextContent(/Payment is not required to join/i);
     expect(screen.getByText(/token, an available username, an email address, and an account password/i)).toBeInTheDocument();
     expect(screen.getByText(/makes the enabled password-recovery path possible/i)).toBeInTheDocument();
     expect(screen.getByText('@name:ckconflux.com')).toBeInTheDocument();

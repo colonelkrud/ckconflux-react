@@ -1,7 +1,7 @@
 import { Database, Gauge, Globe2, HardDrive, Heart, Server, ShieldCheck, Wifi } from 'lucide-react';
 import { createElement } from 'react';
 import { ExternalLink, SiteLink } from '../components/SiteLink';
-import { ACCOUNT_PORTAL_URL, COMMUNITY_MEDIA_ALLOWANCES } from '../config/community';
+import { ACCOUNT_PORTAL_URL, COMMUNITY_MEDIA_ALLOWANCES, COMMUNITY_MEDIA_POLICY, SUPPORTER_URL } from '../config/community';
 
 const infrastructure = [
   [Server, 'Hosting & compute'],
@@ -26,9 +26,10 @@ export default function Membership() {
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Community membership & storage</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Membership</h1>
         <h2 className="mt-4 max-w-3xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">Communication is for the community—not a paid unlock.</h2>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">Critical messaging, calls, and community participation remain free. Voluntary support helps keep CK Conflux running; supporter entitlements primarily add persistent storage and capacity.</p>
+        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">Critical messaging, calls, and community participation remain free. Support is voluntary and helps keep CK Conflux running; supporter benefits may add durable allocated account and media capacity, but “durable” does not mean permanent or stored forever. Media remains subject to the lifecycle policy below.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <ExternalLink href={ACCOUNT_PORTAL_URL} className="rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20">My Account</ExternalLink>
+          <ExternalLink href={SUPPORTER_URL} className="rounded-xl border border-cyan-300/40 bg-cyan-300/10 px-5 py-3 font-semibold text-cyan-100">Support CK Conflux</ExternalLink>
           <ExternalLink href="https://element.ckconflux.com" className="rounded-xl border border-white/20 bg-white/5 px-5 py-3 font-semibold text-white">Open Element</ExternalLink>
         </div>
       </div>
@@ -61,8 +62,18 @@ export default function Membership() {
           {Object.values(COMMUNITY_MEDIA_ALLOWANCES).map((allowance) => <div key={allowance.label} className="rounded-2xl border border-white/10 bg-slate-950/30 p-4"><dt className="text-sm font-semibold text-cyan-100">{allowance.label}</dt><dd className="mt-2 text-2xl font-semibold text-white">{allowance.gibibytes} GiB</dd><dd className="mt-1 font-mono text-xs text-slate-400">{allowance.bytes.toLocaleString('en-US')} bytes</dd></div>)}
         </dl>
         <p className="mt-5 leading-7 text-slate-300">The total capacity is how much media can remain stored in your account. The monthly allowance limits media added during a month. You can therefore reach the monthly limit after adding {COMMUNITY_MEDIA_ALLOWANCES.monthly.gibibytes} GiB even when you still have room within the {COMMUNITY_MEDIA_ALLOWANCES.total.gibibytes} GiB total capacity.</p>
+        <p className="mt-4 leading-7 text-slate-300"><strong className="font-semibold text-white">{COMMUNITY_MEDIA_POLICY.perFile.label}: {COMMUNITY_MEDIA_POLICY.perFile.megabytes} MB.</strong> This applies to each individual upload and is separate from both allowances: {COMMUNITY_MEDIA_ALLOWANCES.total.gibibytes} GiB total capacity does not permit one file that large. A higher backend technical ceiling may exist for compatibility, but it is not a user entitlement.</p>
         <p className="mt-4 leading-7 text-slate-300">At roughly 1 MB per photo, the {COMMUNITY_MEDIA_ALLOWANCES.total.gibibytes} GiB <strong className="font-semibold text-white">total capacity</strong> is on the order of {illustrativePhotoCount.toLocaleString('en-US')} stored photos.</p>
         <p className="mt-4 rounded-xl border border-amber-200/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50"><strong>This total-capacity example is only an illustration, not a monthly upload guarantee.</strong> Actual image sizes vary substantially with resolution, compression, format, device, and quality settings. It is not a guaranteed file count, and allowances may change as the service evolves.</p>
+      </div>
+      <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-white/[0.03] p-7">
+        <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Media lifecycle</p>
+        <h2 className="mt-3 text-2xl font-semibold text-white">Local media and federated caches differ</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <p className="rounded-2xl border border-white/10 p-4 leading-7 text-slate-300"><strong className="text-white">{COMMUNITY_MEDIA_POLICY.localLifetime.label}: {COMMUNITY_MEDIA_POLICY.localLifetime.value}.</strong> Media uploaded by a CK Conflux user and stored locally is subject to this lifecycle; allocated capacity is not a promise of permanent retention.</p>
+          <p className="rounded-2xl border border-white/10 p-4 leading-7 text-slate-300"><strong className="text-white">{COMMUNITY_MEDIA_POLICY.remoteCacheLifetime.label}: {COMMUNITY_MEDIA_POLICY.remoteCacheLifetime.value}.</strong> Media retrieved from another homeserver is a local cache. Eviction does not necessarily delete the original from its source homeserver.</p>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-slate-300">Federation means CK Conflux cannot promise global deletion. Copies already received by another homeserver or recipient, or included in an export or backup, may remain outside CK Conflux’s unilateral control. Encrypted Matrix media may be stored as ciphertext; lifecycle handling does not imply CK Conflux can inspect its plaintext.</p>
       </div>
       <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
         <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Two clear destinations</p>

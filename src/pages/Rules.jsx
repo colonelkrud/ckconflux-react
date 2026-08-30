@@ -1,4 +1,5 @@
 import LegalLayout from '../layout/LegalLayout';
+import { COMMUNITY_MEDIA_POLICY } from '../config/community';
 
 export default function RulesPage() {
   const rules = [
@@ -12,12 +13,12 @@ export default function RulesPage() {
     ['No Advertisements or Spam', 'Commercial ads are not allowed without prior staff approval, including unsolicited promotions or repetitive messages.'],
     ['Accountability for Content', 'You are responsible for the content you publish. Inappropriate content may be removed and can lead to suspension.'],
     ['Follow Platform Updates', 'Stay informed about updates to community rules and features. Compliance with new rules is expected.'],
-    ['Maximum File Size Limit', 'All uploads (images, videos, documents) must not exceed 100MB per file to support server operation and accessibility.'],
+    ['Community Per-File Limit', `Keep each upload (image, video, or document) to ${COMMUNITY_MEDIA_POLICY.perFile.megabytes} MB or less. Backend technical limits may be higher for operations or compatibility, but that ceiling is not an advertised user entitlement or permission to bypass this community rule.`],
     ['CSAM Enforcement', 'CK Conflux uses available service and provider controls, including Cloudflare where applicable, to detect CSAM in content those controls can inspect. End-to-end encrypted Matrix media may be stored only as ciphertext and is not necessarily available to server-side scanning. Identified CSAM triggers immediate termination and legal reporting.'],
   ];
 
   return (
-    <LegalLayout title="Server Rules" lastUpdated="May 9, 2026">
+    <LegalLayout title="Server Rules" lastUpdated="August 30, 2026">
       <p>These rules apply across CK Conflux community services and are enforced alongside our Terms of Use.</p>
       <div className="grid gap-3">
         {rules.map(([title, body], index) => (
