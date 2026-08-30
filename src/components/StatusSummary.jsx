@@ -1,14 +1,65 @@
 import { Link } from '../router/Router';
-import { stateLabel } from '../status/status';
+import { statusHeadline } from '../status/status';
 import { useLocalStatus } from '../status/useLocalStatus';
 
+function relativeUpdateLabel(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return null;
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return 'Updated just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `Updated ${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  return `Updated ${hours} hour${hours === 1 ? '' : 's'} ago`;
+}
+
 export default function StatusSummary() {
-  const status = useLocalStatus();
-  const message = status.phase === 'loading' ? 'Checking service status…' : status.overall === 'operational' ? 'All systems operational' : status.overall === 'degraded' ? 'Some systems are degraded' : status.overall === 'unavailable' ? 'Some systems are unavailable' : 'Local status unavailable';
-  return <div className="min-h-24 rounded-2xl border border-white/10 bg-white/5 p-5" aria-live="polite">
-    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Live status</p>
-    <p className="mt-2 text-lg font-semibold text-white">{message}</p>
-    {status.phase !== 'loading' && <p className="mt-1 text-sm text-slate-400">State: {stateLabel(status.overall)}</p>}
-    <Link to="/status" className="mt-3 inline-flex text-sm font-semibold text-cyan-200 hover:text-cyan-100">View service status →</Link>
+  const status = useLocalStatus({ refreshIntervalMs: 60000 });
+  const affected = status.components.filter(({ state }) => state === 'degraded' || state === 'unavailable');
+  const snapshotMissing = status.phase === 'ready' && status.stale && status.components.length === 0 && !status.generatedAt;
+
+  let message = status.phase === 'loading'
+    ? 'Checking service status…'
+    : status.phase === 'error'
+      ? 'Status is temporarily unavailable'
+      : snapshotMissing
+        ? 'Status snapshot unavailable'
+        : status.stale
+          ? 'Status information may be out of date'
+          : statusHeadline(status.overall);
+
+  if (!status.stale && affected.length === 1 && affected[0].state === status.overall) {
+    message = `${affected[0].name} ${affected[0].state === 'degraded' ? 'is degraded' : 'is unavailable'}`;
+  }
+
+  const messagingOperational = status.components.some(({ id, state }) => id === 'messaging' && state === 'operational');
+  const signinOperational = status.components.some(({ id, state }) => id === 'signin' && state === 'operational');
+  let supporting = null;
+  if (status.phase === 'ready' && status.stale) {
+    supporting = snapshotMissing
+      ? 'CK Conflux has not produced a status snapshot yet.'
+      : `Last reported state: ${statusHeadline(status.overall)}.`;
+  } else if (status.phase === 'ready' && affected.length === 1) {
+    supporting = affected[0].id === 'calls' && messagingOperational && signinOperational
+      ? 'Messaging and sign-in remain operational.'
+      : 'Other services may remain operational; view details for the full status.';
+  } else if (status.phase === 'ready' && affected.length > 1) {
+    supporting = `${affected.length} services are affected.`;
+  }
+
+  const freshness = status.phase === 'ready'
+    ? relativeUpdateLabel(status.generatedAt || (!status.stale ? status.checkedAt : null))
+    : null;
+  const staleNotice = snapshotMissing
+    ? 'Current platform health could not be confirmed.'
+    : 'Status snapshot is stale. Showing the last known status; it may be out of date.';
+
+  return <div className="min-h-24 rounded-2xl border border-white/10 bg-white/5 p-5">
+    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{status.stale ? 'Service status' : 'Live service status'}</p>
+    <p className="mt-2 text-lg font-semibold text-white" aria-live="polite">{message}</p>
+    {supporting && <p className="mt-1 text-sm text-slate-300">{supporting}</p>}
+    {freshness && <p className="mt-1 text-sm text-slate-400">{freshness}</p>}
+    {status.stale && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">{staleNotice}</p>}
+    <Link to="/status" className="mt-3 inline-flex text-sm font-semibold text-cyan-200 hover:text-cyan-100">View details →</Link>
   </div>;
 }

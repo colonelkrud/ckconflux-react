@@ -1,14 +1,21 @@
-const COMPONENT_LABELS = {
-  website: 'Website', web: 'Website', frontend: 'Website',
-  authentication: 'Sign-in / authentication', auth: 'Sign-in / authentication', signin: 'Sign-in / authentication', login: 'Sign-in / authentication',
-  matrix: 'Matrix messaging', messaging: 'Matrix messaging', homeserver: 'Matrix messaging', synapse: 'Matrix messaging',
-  media: 'Media uploads', uploads: 'Media uploads',
-  calls: 'Voice / video calls', call: 'Voice / video calls', matrixrtc: 'Voice / video calls', livekit: 'Voice / video calls',
-  membership: 'Membership / account services', account: 'Membership / account services', accounts: 'Membership / account services',
-  teamspeak: 'TeamSpeak',
+const COMPONENTS = {
+  messaging: { name: 'Messaging', order: 1, aliases: ['matrix', 'messaging', 'homeserver', 'synapse'] },
+  signin: { name: 'Sign in', order: 2, aliases: ['authentication', 'auth', 'signin', 'login'] },
+  calls: { name: 'Voice & video', order: 3, aliases: ['calls', 'call', 'matrixrtc', 'livekit', 'turnify'] },
+  media: { name: 'Media & uploads', order: 4, aliases: ['media', 'uploads'] },
+  account: { name: 'Account & membership', order: 5, aliases: ['membership', 'account', 'accounts'] },
+  website: { name: 'Website', order: 6, aliases: ['website', 'web', 'frontend'] },
 };
 
-const COMPONENT_ALIASES = Object.keys(COMPONENT_LABELS).sort((a, b) => b.length - a.length);
+const ALIASES = Object.entries(COMPONENTS)
+  .flatMap(([id, component]) => component.aliases.map((alias) => ({ alias, id })))
+  .sort((a, b) => b.alias.length - a.alias.length);
+const STATE_PRIORITY = { operational: 0, unknown: 1, degraded: 2, unavailable: 3 };
+const CONTRACT_STATES = new Set(['ok', 'degraded', 'down', 'unknown']);
+const LEGACY_METADATA_KEYS = new Set([
+  'status', 'state', 'health', 'generatedat', 'updatedat', 'timestamp',
+  'snapshotageseconds', 'stale', 'messages', 'message',
+]);
 
 export const STATUS_ENDPOINT = '/status.json';
 export const INDEPENDENT_STATUS_URL = 'https://status.ckconflux.com';
@@ -27,35 +34,110 @@ export function healthState(value) {
   return 'unknown';
 }
 
-function componentName(key) {
+function normalizedKey(key) {
+  return String(key ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function canonicalComponent(key) {
+  const normalized = normalizedKey(key);
+  return ALIASES.find(({ alias }) => normalized === alias || normalized.includes(alias)) ?? null;
+}
+
+function isLegacyHealthEntry(key, value) {
+  if (canonicalComponent(key)) return true;
+  if (LEGACY_METADATA_KEYS.has(normalizedKey(key))) return false;
+  return healthState(value) !== 'unknown';
+}
+
+function normalizeComponent(key) {
   const raw = String(key ?? '').trim();
-  const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const matchingKey = COMPONENT_LABELS[normalized]
-    ? normalized
-    : COMPONENT_ALIASES.find((candidate) => normalized.includes(candidate));
-  if (matchingKey) return COMPONENT_LABELS[matchingKey];
-  if (!raw) return 'Unknown component';
-  return raw
-    .replace(/[_-]+/g, ' ')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const normalized = normalizedKey(raw);
+  const match = canonicalComponent(raw);
+  if (match) return { id: match.id, name: COMPONENTS[match.id].name, order: COMPONENTS[match.id].order };
+  const infrastructureName = /(kubernetes|deployment|namespace|\bpod\b|worker|internal)/i.test(raw);
+  const name = infrastructureName ? 'Additional service' : raw
+    ? raw.replace(/[_-]+/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\b\w/g, (letter) => letter.toUpperCase())
+    : 'Unknown component';
+  return { id: `other-${normalized || 'unknown'}`, name, order: 100 };
+}
+
+function overallState(states) {
+  if (!states.length) return 'unknown';
+  return states.reduce((worst, state) => STATE_PRIORITY[state] > STATE_PRIORITY[worst] ? state : worst, 'operational');
+}
+
+function isCurrentContractPayload(payload) {
+  const rawStatus = typeof payload.status === 'string' ? payload.status.toLowerCase().trim() : null;
+  return Boolean(
+    payload.checks
+    && typeof payload.checks === 'object'
+    && !Array.isArray(payload.checks)
+    && typeof payload.stale === 'boolean'
+    && rawStatus
+    && CONTRACT_STATES.has(rawStatus),
+  );
+}
+
+function isNoSnapshotPayload(payload) {
+  return isCurrentContractPayload(payload)
+    && payload.status.toLowerCase().trim() === 'unknown'
+    && payload.stale === true
+    && Object.keys(payload.checks).length === 0;
 }
 
 export function parseStatus(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
-  const source = payload.components ?? payload.services ?? payload.checks;
-  const hasComponentContainer = Array.isArray(source) || (source && typeof source === 'object');
+  const noSnapshot = isNoSnapshotPayload(payload);
+  const explicitSource = payload.components ?? payload.services ?? payload.checks;
+  const source = explicitSource ?? Object.fromEntries(
+    Object.entries(payload).filter(([key, value]) => isLegacyHealthEntry(key, value)),
+  );
+  if (!source || typeof source !== 'object') return null;
+
   const entries = Array.isArray(source)
     ? source.map((item) => [item?.name ?? item?.component ?? item?.id, item])
-    : source && typeof source === 'object' ? Object.entries(source) : Object.entries(payload);
-  const components = entries.map(([key, value]) => ({ name: componentName(key), state: healthState(value) }));
-  if (!hasComponentContainer && components.every(({ state }) => state === 'unknown')) return null;
-  const unique = [...new Map(components.map((component) => [component.name, component])).values()];
-  if (!unique.length) return null;
+    : Object.entries(source);
+  if (!entries.length && !noSnapshot) return null;
+
+  const byId = new Map();
+  entries.forEach(([key, value]) => {
+    const component = normalizeComponent(key);
+    const next = { id: component.id, name: component.name, state: healthState(value), order: component.order };
+    const current = byId.get(component.id);
+    if (!current || STATE_PRIORITY[next.state] > STATE_PRIORITY[current.state]) byId.set(component.id, next);
+  });
+  const components = [...byId.values()]
+    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
+    .map(({ id, name, state }) => ({ id, name, state }));
+
   const generatedAt = payload.generatedAt ?? payload.generated_at ?? payload.updatedAt ?? payload.updated_at ?? payload.timestamp ?? null;
-  const states = unique.map(({ state }) => state);
-  const overall = states.includes('unavailable') ? 'unavailable' : states.includes('degraded') ? 'degraded' : states.every((state) => state === 'operational') ? 'operational' : 'unknown';
-  return { overall, components: unique, generatedAt };
+  const states = components.map(({ state }) => state);
+  const feedStateValue = payload.status ?? payload.state ?? payload.health;
+  if (feedStateValue !== undefined && feedStateValue !== null) states.push(healthState(feedStateValue));
+  const overall = overallState(states);
+  const snapshotAgeValue = payload.snapshotAgeSeconds ?? payload.snapshot_age_seconds;
+  const snapshotAgeSeconds = typeof snapshotAgeValue === 'number' && Number.isFinite(snapshotAgeValue) && snapshotAgeValue >= 0
+    ? snapshotAgeValue
+    : null;
+  const messages = Array.isArray(payload.messages)
+    ? payload.messages.filter((message) => typeof message === 'string' && message.trim()).map((message) => message.trim())
+    : [];
+
+  return {
+    overall,
+    components,
+    generatedAt,
+    snapshotAgeSeconds,
+    stale: payload.stale === true,
+    messages,
+  };
 }
 
 export const stateLabel = (state) => ({ operational: 'Operational', degraded: 'Degraded', unavailable: 'Unavailable', unknown: 'Unknown' }[state] ?? 'Unknown');
+
+export const statusHeadline = (state) => ({
+  operational: 'All systems operational',
+  degraded: 'Some services are degraded',
+  unavailable: 'Service outage detected',
+  unknown: 'Status information incomplete',
+}[state] ?? 'Status information incomplete');

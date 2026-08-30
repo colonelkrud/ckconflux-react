@@ -1,21 +1,64 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseStatus, STATUS_ENDPOINT } from './status';
 
-export function useLocalStatus() {
-  const [result, setResult] = useState({ phase: 'loading', overall: 'unknown', components: [], generatedAt: null });
-  useEffect(() => {
+const EMPTY_RESULT = {
+  phase: 'loading',
+  overall: 'unknown',
+  components: [],
+  generatedAt: null,
+  snapshotAgeSeconds: null,
+  messages: [],
+  checkedAt: null,
+  isRefreshing: false,
+  stale: false,
+  refreshError: false,
+};
+
+export function useLocalStatus({ refreshIntervalMs = 0, timeoutMs = 8000 } = {}) {
+  const [result, setResult] = useState(EMPTY_RESULT);
+  const mounted = useRef(false);
+  const activeController = useRef(null);
+
+  const refresh = useCallback(async () => {
+    activeController.current?.abort();
     const controller = new AbortController();
-    let mounted = true;
-    const timer = setTimeout(() => { controller.abort(); if (mounted) setResult({ phase: 'error', overall: 'unknown', components: [], generatedAt: null }); }, 8000);
-    fetch(STATUS_ENDPOINT, { signal: controller.signal, headers: { Accept: 'application/json' } })
-      .then((response) => { if (!response.ok) throw new Error('Status request failed'); return response.json(); })
-      .then((payload) => {
-        const parsed = parseStatus(payload);
-        setResult(parsed ? { phase: 'ready', ...parsed } : { phase: 'error', overall: 'unknown', components: [], generatedAt: null });
-      })
-      .catch(() => { if (mounted && !controller.signal.aborted) setResult({ phase: 'error', overall: 'unknown', components: [], generatedAt: null }); })
-      .finally(() => clearTimeout(timer));
-    return () => { mounted = false; clearTimeout(timer); controller.abort(); };
-  }, []);
-  return result;
+    activeController.current = controller;
+    setResult((current) => current.phase === 'ready' ? { ...current, isRefreshing: true } : { ...EMPTY_RESULT });
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(STATUS_ENDPOINT, { signal: controller.signal, headers: { Accept: 'application/json' } });
+      const parsed = parseStatus(await response.json());
+      if (!parsed) throw new Error('Unrecognized status payload');
+      if (mounted.current && activeController.current === controller) {
+        setResult({
+          phase: 'ready',
+          ...parsed,
+          checkedAt: new Date().toISOString(),
+          isRefreshing: false,
+          refreshError: false,
+        });
+      }
+    } catch {
+      if (mounted.current && activeController.current === controller) {
+        setResult((current) => current.phase === 'ready'
+          ? { ...current, isRefreshing: false, stale: true, refreshError: true }
+          : { ...EMPTY_RESULT, phase: 'error', refreshError: true });
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+  }, [timeoutMs]);
+
+  useEffect(() => {
+    mounted.current = true;
+    refresh();
+    const interval = refreshIntervalMs > 0 ? setInterval(refresh, refreshIntervalMs) : null;
+    return () => {
+      mounted.current = false;
+      activeController.current?.abort();
+      if (interval) clearInterval(interval);
+    };
+  }, [refresh, refreshIntervalMs]);
+
+  return { ...result, refresh };
 }

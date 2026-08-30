@@ -392,16 +392,20 @@ describe('CK Conflux application architecture', () => {
   it('renders successful component status and its generation time', async () => {
     fetch.mockResolvedValue({ ok: true, json: async () => ({ generated_at: '2026-08-26T12:00:00Z', components: { website: 'healthy', authentication: 'up', matrix: 'operational', media: 'ok', calls: 'available', membership: 'passing' } }) });
     renderPath('/status');
-    expect(await screen.findByText('Overall: Operational')).toBeInTheDocument();
-    expect(screen.getByText('Matrix messaging')).toBeInTheDocument();
-    expect(screen.getByText('Voice / video calls')).toBeInTheDocument();
-    expect(screen.getByText(/Status payload updated:/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'All systems operational' })).toBeInTheDocument();
+    expect(screen.getByText('Messaging')).toBeInTheDocument();
+    expect(screen.getByText('Voice & video')).toBeInTheDocument();
+    expect(document.querySelector('time')).toHaveAttribute('datetime', '2026-08-26T12:00:00Z');
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    const overall = screen.getByRole('heading', { name: /overall ck conflux status/i });
+    const independent = screen.getByRole('heading', { name: 'Independent monitoring' });
+    expect(overall.compareDocumentPosition(independent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('renders degraded status without claiming all systems operational', async () => {
     fetch.mockResolvedValue({ ok: true, json: async () => ({ components: { website: 'operational', matrix: 'degraded' } }) });
     renderPath('/');
-    expect(await screen.findByText('Some systems are degraded')).toBeInTheDocument();
+    expect(await screen.findByText('Messaging is degraded')).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('All systems operational');
   });
 
@@ -411,14 +415,41 @@ describe('CK Conflux application architecture', () => {
   ])('shows unknown status for a %s', async (_name, response) => {
     fetch.mockImplementation(response);
     renderPath('/status');
-    expect(await screen.findByRole('heading', { name: 'Local status unavailable / unknown' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: "We couldn't retrieve CK Conflux service health" })).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('All systems operational');
   });
 
   it('prominently links the authoritative independent status host', () => {
     renderPath('/status');
-    expect(screen.getByRole('link', { name: 'Open independent status page' })).toHaveAttribute('href', 'https://status.ckconflux.com');
+    expect(screen.getByRole('link', { name: /Open independent status page/ })).toHaveAttribute('href', 'https://status.ckconflux.com');
     expect(document.body).not.toHaveTextContent('status.colonelkrud.com');
+  });
+
+  it('renders a valid HTTP 503 outage payload as degraded status with user impact', async () => {
+    fetch.mockResolvedValue({ ok: false, status: 503, json: async () => ({ status: 'degraded', generated_at: '2026-08-30T12:00:00Z', checks: { website: 'ok', login: 'ok', matrix: 'ok', media: 'ok', calls: 'degraded', membership: 'ok' } }) });
+    renderPath('/status');
+    expect(await screen.findByRole('heading', { name: 'Some services are degraded' })).toBeInTheDocument();
+    expect(screen.getByText('Voice & video').closest('li')).toHaveTextContent('Degraded');
+    expect(screen.getByText('Voice & video').closest('li')).toHaveTextContent(/Calls may fail to connect or may be disrupted/);
+    expect(document.body).not.toHaveTextContent('Local status unavailable / unknown');
+    expect(document.body).not.toHaveTextContent('Synapse');
+  });
+
+  it('distinguishes an unavailable service from a degraded service', async () => {
+    fetch.mockResolvedValue({ ok: false, status: 503, json: async () => ({ checks: { matrix: 'down', calls: 'degraded' } }) });
+    renderPath('/status');
+    expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
+    expect(screen.getByText('Messaging').closest('li')).toHaveTextContent('Unavailable');
+    expect(screen.getByText('Messaging').closest('li')).toHaveTextContent(/messages may be delayed or fail/i);
+  });
+
+  it('keeps the healthy home summary concise without rendering service rows', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ checks: { matrix: 'ok', login: 'ok' } }) });
+    renderPath('/');
+    expect(await screen.findByText('All systems operational')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('State: Operational');
+    expect(screen.getByRole('link', { name: 'View details →' })).toHaveAttribute('href', '/status');
+    expect(screen.queryByRole('heading', { name: 'Services' })).not.toBeInTheDocument();
   });
 
   it('preserves a reduced-motion override and observes the preference', () => {
