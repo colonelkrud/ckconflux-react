@@ -66,15 +66,6 @@ export default function Membership() {
         <p className="mt-4 leading-7 text-slate-300">At roughly 1 MB per photo, the {COMMUNITY_MEDIA_ALLOWANCES.total.gibibytes} GiB <strong className="font-semibold text-white">total capacity</strong> is on the order of {illustrativePhotoCount.toLocaleString('en-US')} stored photos.</p>
         <p className="mt-4 rounded-xl border border-amber-200/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50"><strong>This total-capacity example is only an illustration, not a monthly upload guarantee.</strong> Actual image sizes vary substantially with resolution, compression, format, device, and quality settings. It is not a guaranteed file count, and allowances may change as the service evolves.</p>
       </div>
-      <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-        <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Media lifecycle</p>
-        <h2 className="mt-3 text-2xl font-semibold text-white">Local media and federated caches differ</h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <p className="rounded-2xl border border-white/10 p-4 leading-7 text-slate-300"><strong className="text-white">{COMMUNITY_MEDIA_POLICY.localLifetime.label}: {COMMUNITY_MEDIA_POLICY.localLifetime.value}.</strong> Media uploaded by a CK Conflux user and stored locally is subject to this lifecycle; allocated capacity is not a promise of permanent retention.</p>
-          <p className="rounded-2xl border border-white/10 p-4 leading-7 text-slate-300"><strong className="text-white">{COMMUNITY_MEDIA_POLICY.remoteCacheLifetime.label}: {COMMUNITY_MEDIA_POLICY.remoteCacheLifetime.value}.</strong> Media retrieved from another homeserver is a local cache. Eviction does not necessarily delete the original from its source homeserver.</p>
-        </div>
-        <p className="mt-4 text-sm leading-6 text-slate-300">Federation means CK Conflux cannot promise global deletion. Copies already received by another homeserver or recipient, or included in an export or backup, may remain outside CK Conflux’s unilateral control. Encrypted Matrix media may be stored as ciphertext; lifecycle handling does not imply CK Conflux can inspect its plaintext.</p>
-      </div>
       <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
         <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Two clear destinations</p>
         <h2 className="mt-3 text-2xl font-semibold text-white">Manage or communicate</h2>
@@ -83,6 +74,15 @@ export default function Membership() {
           <div className="border-t border-white/10 pt-6"><h3 className="font-semibold text-white">Open Element</h3><p className="mt-1 text-sm leading-6 text-slate-300">Messaging, community rooms, and calls. Use Element to participate—not to administer membership or storage.</p><ExternalLink href="https://element.ckconflux.com" className="mt-3 inline-flex font-semibold text-cyan-200 underline underline-offset-4">Open Element</ExternalLink></div>
         </div>
         <p className="mt-6 text-xs leading-5 text-slate-400">Sign-in and user-specific account data stay in the dedicated account portal; this public site does not retrieve them.</p>
+      </div>
+      <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-white/[0.03] p-7">
+        <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Media lifecycle</p>
+        <h2 className="mt-3 text-2xl font-semibold text-white">Local media and federated caches differ</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <p className="rounded-2xl border border-white/10 p-4 leading-7 text-slate-300"><strong className="text-white">{COMMUNITY_MEDIA_POLICY.localLifetime.label}: {COMMUNITY_MEDIA_POLICY.localLifetime.value}.</strong> Media uploaded by a CK Conflux user and stored locally is subject to this lifecycle; allocated capacity is not a promise of permanent retention.</p>
+          <p className="rounded-2xl border border-white/10 p-4 leading-7 text-slate-300"><strong className="text-white">{COMMUNITY_MEDIA_POLICY.remoteCacheLifetime.label}: {COMMUNITY_MEDIA_POLICY.remoteCacheLifetime.value}.</strong> Media retrieved from another homeserver is a local cache. Eviction does not necessarily delete the original from its source homeserver.</p>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-slate-300">Federation means CK Conflux cannot promise global deletion. Copies already received by another homeserver or recipient, or included in an export or backup, may remain outside CK Conflux’s unilateral control. Encrypted Matrix media may be stored as ciphertext; lifecycle handling does not imply CK Conflux can inspect its plaintext.</p>
       </div>
       <div className="lg:col-span-2 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-6 text-center"><h2 className="text-xl font-semibold text-white">Need help choosing where to go?</h2><p className="mt-2 text-sm text-slate-300">Visit the help center for service guidance, or My Account for your actual current total capacity, monthly allowance, usage, and entitlement.</p><SiteLink to="/help" className="mt-4 inline-flex rounded-lg border border-white/20 px-4 py-2 font-semibold text-white">Visit Help</SiteLink></div>
     </section>
