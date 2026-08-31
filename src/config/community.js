@@ -13,7 +13,7 @@ export const PASSWORD_RECOVERY_URL = `${ELEMENT_URL}/#/forgot_password`;
 export const ELEMENT_RECOVERY_GUIDES = Object.freeze({
   noRecoveryMethod: 'https://docs.element.io/latest/element-support/matrix-account-management/resetting-your-identity/',
   recoveryKey: 'https://docs.element.io/latest/element-support/matrix-account-management/secure-backup/',
-  newSession: 'https://docs.element.io/latest/element-support/matrix-account-management/verifying-a-new-login/',
+  newSession: 'https://docs.element.io/latest/element-support/device-verification/how-to-verify-devices/',
   anotherUser: 'https://docs.element.io/latest/element-support/matrix-rooms/room-members/verifying-a-user/',
 });
 export const SUPPORTER_URL = 'https://buymeacoffee.com/conflux';
