@@ -26,6 +26,14 @@ describe('StatusSummary', () => {
     expect(screen.getByText('5 services are affected.')).toBeInTheDocument();
   });
 
+  it('does not claim retained data exists when the initial status request fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    renderSummary();
+
+    expect(await screen.findByText('Status is temporarily unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to refresh status. Showing the last known update.')).not.toBeInTheDocument();
+  });
+
   it('distinguishes a structured no-snapshot response from a feed failure', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
       status: 'unknown', generated_at: null, snapshot_age_seconds: null, stale: true,
