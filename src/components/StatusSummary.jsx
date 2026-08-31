@@ -16,14 +16,14 @@ function relativeUpdateLabel(value) {
 export default function StatusSummary() {
   const status = useLocalStatus({ refreshIntervalMs: 60000 });
   const affected = status.components.filter(({ state }) => state === 'degraded' || state === 'unavailable');
-  const snapshotMissing = status.phase === 'ready' && status.stale && status.components.length === 0 && !status.generatedAt;
+  const snapshotMissing = status.phase === 'ready' && status.noSnapshot;
 
   let message = status.phase === 'loading'
     ? 'Checking service status…'
     : status.phase === 'error'
       ? 'Status is temporarily unavailable'
       : snapshotMissing
-        ? 'Status snapshot unavailable'
+        ? 'Status information unavailable'
         : status.stale
           ? 'Status information may be out of date'
           : statusHeadline(status.overall);
@@ -37,7 +37,7 @@ export default function StatusSummary() {
   let supporting = null;
   if (status.phase === 'ready' && status.stale) {
     supporting = snapshotMissing
-      ? 'CK Conflux has not produced a status snapshot yet.'
+      ? 'Current service status is not available yet.'
       : `Last reported state: ${statusHeadline(status.overall)}.`;
   } else if (status.phase === 'ready' && affected.length === 1) {
     supporting = affected[0].id === 'calls' && messagingOperational && signinOperational
@@ -51,8 +51,8 @@ export default function StatusSummary() {
     ? relativeUpdateLabel(status.generatedAt || (!status.stale ? status.checkedAt : null))
     : null;
   const staleNotice = snapshotMissing
-    ? 'Current platform health could not be confirmed.'
-    : 'Status snapshot is stale. Showing the last known status; it may be out of date.';
+    ? 'A status snapshot is not available yet.'
+    : 'Showing the last reported service status.';
 
   return <div className="min-h-24 rounded-2xl border border-white/10 bg-white/5 p-5">
     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{status.stale ? 'Service status' : 'Live service status'}</p>
@@ -60,6 +60,7 @@ export default function StatusSummary() {
     {supporting && <p className="mt-1 text-sm text-slate-300">{supporting}</p>}
     {freshness && <p className="mt-1 text-sm text-slate-400">{freshness}</p>}
     {status.stale && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">{staleNotice}</p>}
+    {status.refreshError && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">Unable to refresh status. Showing the last known update.</p>}
     <Link to="/status" className="mt-3 inline-flex text-sm font-semibold text-cyan-200 hover:text-cyan-100">View details →</Link>
   </div>;
 }
