@@ -23,6 +23,7 @@ describe('Status page', () => {
 
     expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
     expect(screen.getByText(/website remains available/i)).toBeInTheDocument();
+    expect(screen.getByText('5 CK Conflux services are currently affected. The website remains available.')).toBeInTheDocument();
     expect(screen.getByText('Website').closest('li')).toHaveTextContent('Operational');
     expect(screen.getByText('Sign in').closest('li')).toHaveTextContent('Degraded');
     for (const name of ['Messaging', 'Voice & video', 'Media & uploads', 'Account & membership']) {
@@ -30,6 +31,18 @@ describe('Status page', () => {
     }
     expect(screen.queryByRole('heading', { name: 'Status information unavailable' })).not.toBeInTheDocument();
     expect(screen.queryByText('Synapse degraded')).not.toBeInTheDocument();
+  });
+
+  it('does not overstate the outage breadth when only one component is affected', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'down',
+      checks: { website: 'ok', calls: 'down' },
+    }, false, 503)));
+    render(<Status />);
+
+    expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
+    expect(screen.getByText('One or more CK Conflux services are currently unavailable. The website remains available.')).toBeInTheDocument();
+    expect(screen.queryByText(/Several CK Conflux services/i)).not.toBeInTheDocument();
   });
 
   it('does not claim absent services are healthy for a partial operational feed', async () => {
