@@ -44,6 +44,32 @@ describe('StatusSummary', () => {
     expect(screen.getByText('Current service status is not available yet.')).toBeInTheDocument();
   });
 
+  it('does not claim a last known update after a no-snapshot response fails to refresh', async () => {
+    vi.useFakeTimers();
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response({
+        status: 'unknown', generated_at: null, snapshot_age_seconds: null, stale: true,
+        messages: ['Status snapshot is not yet available'], checks: {},
+      }))
+      .mockRejectedValueOnce(new Error('offline'));
+    vi.stubGlobal('fetch', fetch);
+    renderSummary();
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText('Status information unavailable')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60000);
+      await Promise.resolve();
+    });
+    expect(screen.getByText('A status snapshot is not available yet.')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to refresh status. Showing the last known update.')).not.toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('does not claim messaging and sign-in are operational without evidence for both', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ checks: { calls: 'degraded', matrix: 'mystery', login: 'ok' } })));
     renderSummary();
