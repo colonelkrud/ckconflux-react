@@ -60,7 +60,7 @@ export default function StatusSummary() {
     {supporting && <p className="mt-1 text-sm text-slate-300">{supporting}</p>}
     {freshness && <p className="mt-1 text-sm text-slate-400">{freshness}</p>}
     {status.stale && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">{staleNotice}</p>}
-    {status.refreshError && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">Unable to refresh status. Showing the last known update.</p>}
+    {status.phase === 'ready' && status.refreshError && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">Unable to refresh status. Showing the last known update.</p>}
     <Link to="/status" className="mt-3 inline-flex text-sm font-semibold text-cyan-200 hover:text-cyan-100">View details →</Link>
   </div>;
 }
