@@ -16,6 +16,60 @@ afterEach(() => {
 });
 
 describe('StatusSummary', () => {
+  it('reports the feed-level production outage even when the website is operational', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'down', stale: false,
+      checks: { website: 'ok', login: 'degraded', matrix: 'down', media: 'down', calls: 'down', membership: 'down' },
+    })));
+    renderSummary();
+    expect(await screen.findByText('Service outage detected')).toBeInTheDocument();
+    expect(screen.getByText('5 services are affected.')).toBeInTheDocument();
+  });
+
+  it('does not claim retained data exists when the initial status request fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    renderSummary();
+
+    expect(await screen.findByText('Status is temporarily unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to refresh status. Showing the last known update.')).not.toBeInTheDocument();
+  });
+
+  it('distinguishes a structured no-snapshot response from a feed failure', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'unknown', generated_at: null, snapshot_age_seconds: null, stale: true,
+      messages: ['Status snapshot is not yet available'], checks: {},
+    })));
+    renderSummary();
+    expect(await screen.findByText('Status information unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Current service status is not available yet.')).toBeInTheDocument();
+  });
+
+  it('does not claim a last known update after a no-snapshot response fails to refresh', async () => {
+    vi.useFakeTimers();
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response({
+        status: 'unknown', generated_at: null, snapshot_age_seconds: null, stale: true,
+        messages: ['Status snapshot is not yet available'], checks: {},
+      }))
+      .mockRejectedValueOnce(new Error('offline'));
+    vi.stubGlobal('fetch', fetch);
+    renderSummary();
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText('Status information unavailable')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60000);
+      await Promise.resolve();
+    });
+    expect(screen.getByText('A status snapshot is not available yet.')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to refresh status. Showing the last known update.')).not.toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('does not claim messaging and sign-in are operational without evidence for both', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ checks: { calls: 'degraded', matrix: 'mystery', login: 'ok' } })));
     renderSummary();
@@ -56,7 +110,7 @@ describe('StatusSummary', () => {
     expect(await screen.findByText('Status information may be out of date')).toBeInTheDocument();
     expect(screen.queryByText('All systems operational')).not.toBeInTheDocument();
     expect(screen.getByText('Service status')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Status snapshot is stale. Showing the last known status; it may be out of date.');
+    expect(screen.getByRole('status')).toHaveTextContent('Showing the last reported service status.');
   });
 
   it('keeps freshness visible for an incident and warns when its refresh fails', async () => {
@@ -79,7 +133,7 @@ describe('StatusSummary', () => {
       await vi.advanceTimersByTimeAsync(60000);
       await Promise.resolve();
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Status snapshot is stale. Showing the last known status; it may be out of date.');
+    expect(screen.getByRole('status')).toHaveTextContent('Unable to refresh status. Showing the last known update.');
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

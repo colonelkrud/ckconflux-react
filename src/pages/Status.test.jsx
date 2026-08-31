@@ -10,6 +10,41 @@ afterEach(() => {
 });
 
 describe('Status page', () => {
+  it('renders a production-style HTTP 503 outage while preserving all six component states', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'down',
+      generated_at: '2026-08-30T23:27:03Z',
+      messages: ['Synapse degraded', 'Media uploads degraded', 'Calls degraded', 'Membership services degraded'],
+      checks: { website: 'ok', login: 'degraded', matrix: 'down', media: 'down', calls: 'down', membership: 'down' },
+      snapshot_age_seconds: 7.2,
+      stale: false,
+    }, false, 503)));
+    render(<Status />);
+
+    expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
+    expect(screen.getByText(/website remains available/i)).toBeInTheDocument();
+    expect(screen.getByText('5 CK Conflux services are currently affected. The website remains available.')).toBeInTheDocument();
+    expect(screen.getByText('Website').closest('li')).toHaveTextContent('Operational');
+    expect(screen.getByText('Sign in').closest('li')).toHaveTextContent('Degraded');
+    for (const name of ['Messaging', 'Voice & video', 'Media & uploads', 'Account & membership']) {
+      expect(screen.getByText(name).closest('li')).toHaveTextContent('Unavailable');
+    }
+    expect(screen.queryByRole('heading', { name: 'Status information unavailable' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Synapse degraded')).not.toBeInTheDocument();
+  });
+
+  it('does not overstate the outage breadth when only one component is affected', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'down',
+      checks: { website: 'ok', calls: 'down' },
+    }, false, 503)));
+    render(<Status />);
+
+    expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
+    expect(screen.getByText('One or more CK Conflux services are currently unavailable. The website remains available.')).toBeInTheDocument();
+    expect(screen.queryByText(/Several CK Conflux services/i)).not.toBeInTheDocument();
+  });
+
   it('does not claim absent services are healthy for a partial operational feed', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ checks: { matrix: 'ok', login: 'ok' } })));
     render(<Status />);
@@ -45,7 +80,7 @@ describe('Status page', () => {
 
     expect(await screen.findByRole('heading', { name: 'Status information may be out of date' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'All systems operational' })).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Status snapshot is stale. Showing the last known status; it may be out of date.');
+    expect(screen.getByRole('status')).toHaveTextContent('Showing the last reported service status.');
     expect(screen.getByRole('heading', { name: 'Services' })).toBeInTheDocument();
   });
 
@@ -61,11 +96,10 @@ describe('Status page', () => {
 
     render(<Status />);
 
-    expect(await screen.findByRole('heading', { name: 'Status snapshot unavailable' })).toBeInTheDocument();
-    expect(screen.getByText(/has not produced a status snapshot yet/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Status information unavailable' })).toBeInTheDocument();
+    expect(screen.getByText('Current service status is not available yet.')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Services' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: "We couldn't retrieve CK Conflux service health" })).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Current platform health could not be confirmed.');
+    expect(screen.getByText('A status snapshot is not available yet.')).toBeInTheDocument();
   });
 
   it('uses neutral incomplete wording when only the feed-level state is unknown', async () => {

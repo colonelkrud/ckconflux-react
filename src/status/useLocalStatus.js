@@ -12,6 +12,7 @@ const EMPTY_RESULT = {
   isRefreshing: false,
   stale: false,
   refreshError: false,
+  noSnapshot: false,
 };
 
 export function useLocalStatus({ refreshIntervalMs = 0, timeoutMs = 8000 } = {}) {
@@ -41,7 +42,7 @@ export function useLocalStatus({ refreshIntervalMs = 0, timeoutMs = 8000 } = {})
     } catch {
       if (mounted.current && activeController.current === controller) {
         setResult((current) => current.phase === 'ready'
-          ? { ...current, isRefreshing: false, stale: true, refreshError: true }
+          ? { ...current, isRefreshing: false, refreshError: true }
           : { ...EMPTY_RESULT, phase: 'error', refreshError: true });
       }
     } finally {

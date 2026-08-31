@@ -41,13 +41,9 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getAllByRole('link', { name: 'Join CK Conflux' })[0]).toHaveAttribute('href', '/join');
   });
 
-  it('renders the independent service status badge without replacing footer navigation', () => {
+  it('keeps status navigation without a redundant monitoring badge', () => {
     renderPath('/');
-    const badge = screen.getByRole('img', { name: 'CK Conflux service status' });
-    expect(badge).toHaveAttribute('src', 'https://badge.uptimerobot.com/psp/177dfd29052bc6cc25407cf35076378b.svg?style=text&theme=dark');
-    expect(badge.closest('a')).toHaveAttribute('href', 'https://status.ckconflux.com?utm_source=status_badge&utm_medium=referral');
-    expect(badge.closest('a')).toHaveAttribute('target', '_blank');
-    expect(badge.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.queryByRole('img', { name: 'CK Conflux service status' })).not.toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Explore links' })).toHaveTextContent('Status');
     expect(screen.getByRole('navigation', { name: 'Explore links' })).toHaveTextContent('About');
     expect(screen.getByRole('navigation', { name: 'Community links' })).toHaveTextContent('Support');
@@ -425,8 +421,8 @@ describe('CK Conflux application architecture', () => {
     expect(document.querySelector('time')).toHaveAttribute('datetime', '2026-08-26T12:00:00Z');
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
     const overall = screen.getByRole('heading', { name: /overall ck conflux status/i });
-    const independent = screen.getByRole('heading', { name: 'Independent monitoring' });
-    expect(overall.compareDocumentPosition(independent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const uptime = screen.getByRole('link', { name: /View uptime history/ });
+    expect(overall.compareDocumentPosition(uptime) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('renders degraded status without claiming all systems operational', async () => {
@@ -442,13 +438,15 @@ describe('CK Conflux application architecture', () => {
   ])('shows unknown status for a %s', async (_name, response) => {
     fetch.mockImplementation(response);
     renderPath('/status');
-    expect(await screen.findByRole('heading', { name: "We couldn't retrieve CK Conflux service health" })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Status information unavailable' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('All systems operational');
   });
 
-  it('prominently links the authoritative independent status host', () => {
+  it('provides one compact link to uptime history', () => {
     renderPath('/status');
-    expect(screen.getByRole('link', { name: /Open independent status page/ })).toHaveAttribute('href', 'https://status.ckconflux.com');
+    expect(screen.getByRole('link', { name: /View uptime history/ })).toHaveAttribute('href', 'https://status.ckconflux.com');
+    expect(screen.queryByText('Independent monitoring')).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('status.colonelkrud.com');
   });
 

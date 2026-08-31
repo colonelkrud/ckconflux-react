@@ -81,7 +81,7 @@ describe('useLocalStatus', () => {
     expect(result.current.phase).toBe('error');
   });
 
-  it('keeps successful data visible during refresh and marks it stale after failure', async () => {
+  it('keeps successful data visible and distinguishes a client refresh failure', async () => {
     let rejectRefresh;
     const fetch = vi.fn()
       .mockResolvedValueOnce(response(payload()))
@@ -95,9 +95,24 @@ describe('useLocalStatus', () => {
     expect(result.current.components[0].name).toBe('Messaging');
     await act(async () => { rejectRefresh(new Error('offline')); });
     expect(result.current.phase).toBe('ready');
-    expect(result.current.stale).toBe(true);
+    expect(result.current.stale).toBe(false);
     expect(result.current.refreshError).toBe(true);
     expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears a refresh error after a later successful refresh', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response(payload()))
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(response(payload('degraded')));
+    vi.stubGlobal('fetch', fetch);
+    const { result } = renderHook(() => useLocalStatus());
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    await act(async () => { await result.current.refresh(); });
+    expect(result.current.refreshError).toBe(true);
+    await act(async () => { await result.current.refresh(); });
+    expect(result.current.refreshError).toBe(false);
+    expect(result.current.overall).toBe('degraded');
   });
 
   it('manual refresh performs another successful request', async () => {
