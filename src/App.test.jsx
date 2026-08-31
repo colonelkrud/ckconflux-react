@@ -350,6 +350,16 @@ describe('CK Conflux application architecture', () => {
     expect(document.body).not.toHaveTextContent(/Element Classic.*recommend|recommend.*Element Classic/i);
   });
 
+  it('keeps Help links on the maintained Element device and messaging guides', () => {
+    renderPath('/help');
+    expect(screen.getByRole('link', { name: 'device verification guide' })).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/device-verification/how-to-verify-devices/');
+    expect(screen.getByRole('link', { name: 'Element messages and threads' })).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/quick-start-guide/the-middle-panel/');
+
+    const externalTargets = [...document.querySelectorAll('a')].map((link) => link.getAttribute('href')).join(' ');
+    expect(externalTargets).not.toContain('/verifying-a-new-login/');
+    expect(externalTargets).not.toContain('/element-support/matrix-messaging/');
+  });
+
   it('distinguishes recovery credentials and the two verification concepts', () => {
     renderPath('/security');
     expect(screen.getByText(/Matrix recovery key is separate from your account password/i)).toBeInTheDocument();
@@ -358,7 +368,7 @@ describe('CK Conflux application architecture', () => {
     const distinction = screen.getByRole('heading', { name: 'Trusting your session is not verifying another person' }).closest('article');
     expect(distinction).toHaveTextContent(/Your own new device or session.*Verifying another person/s);
     expect(distinction).toHaveTextContent(/do not restore your own encryption state/i);
-    expect(screen.getAllByRole('link', { name: 'Element guide to verifying a new login' })[0]).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/matrix-account-management/verifying-a-new-login/');
+    expect(screen.getAllByRole('link', { name: 'Element device verification guide' })[0]).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/device-verification/how-to-verify-devices/');
     expect(screen.getByRole('link', { name: 'Element guide to verifying another user' })).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/matrix-rooms/room-members/verifying-a-user/');
     expect(screen.getByRole('link', { name: 'Element secure-backup and recovery-key guide' })).toHaveAttribute('href', 'https://docs.element.io/latest/element-support/matrix-account-management/secure-backup/');
     expect(document.querySelectorAll('a[href*="managing-a-matrix-account"], a[href*="#resetting-your-identity"]')).toHaveLength(0);

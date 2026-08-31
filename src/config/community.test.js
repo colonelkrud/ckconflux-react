@@ -6,13 +6,14 @@ describe('maintained Element recovery documentation', () => {
     expect(ELEMENT_RECOVERY_GUIDES).toEqual({
       noRecoveryMethod: 'https://docs.element.io/latest/element-support/matrix-account-management/resetting-your-identity/',
       recoveryKey: 'https://docs.element.io/latest/element-support/matrix-account-management/secure-backup/',
-      newSession: 'https://docs.element.io/latest/element-support/matrix-account-management/verifying-a-new-login/',
+      newSession: 'https://docs.element.io/latest/element-support/device-verification/how-to-verify-devices/',
       anotherUser: 'https://docs.element.io/latest/element-support/matrix-rooms/room-members/verifying-a-user/',
     });
 
     expect(new Set(Object.values(ELEMENT_RECOVERY_GUIDES))).toHaveProperty('size', 4);
     expect(Object.values(ELEMENT_RECOVERY_GUIDES).join(' ')).not.toContain('managing-a-matrix-account');
     expect(Object.values(ELEMENT_RECOVERY_GUIDES).join(' ')).not.toContain('#resetting-your-identity');
+    expect(ELEMENT_RECOVERY_GUIDES.newSession).not.toContain('/verifying-a-new-login/');
   });
 });
 
