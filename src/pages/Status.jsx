@@ -54,6 +54,7 @@ export default function Status() {
   const status = useLocalStatus({ refreshIntervalMs: 60000 });
   const error = status.phase === 'error';
   const snapshotMissing = status.phase === 'ready' && status.noSnapshot;
+  const affectedCount = status.components.filter(({ state }) => state === 'degraded' || state === 'unavailable').length;
   const hasUnknownComponent = status.components.some(({ state }) => state === 'unknown');
   const websiteOperational = status.components.some(({ id, state }) => id === 'website' && state === 'operational');
   const headline = snapshotMissing
@@ -66,7 +67,9 @@ export default function Status() {
     : status.stale
       ? `Showing the last reported service status. Last reported state: ${statusHeadline(status.overall)}.`
       : status.overall === 'unavailable' && websiteOperational
-        ? 'Several CK Conflux services are currently unavailable. The website remains available.'
+        ? affectedCount > 1
+          ? `${affectedCount} CK Conflux services are currently affected. The website remains available.`
+          : 'One or more CK Conflux services are currently unavailable. The website remains available.'
         : status.overall === 'unknown' && !hasUnknownComponent
         ? 'Status information is incomplete; the status feed did not confirm a complete platform state.'
         : DETAILS[status.overall];
