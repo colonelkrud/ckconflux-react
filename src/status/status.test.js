@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseStatus } from './status';
+import { parseStatus, serviceImpact } from './status';
 
 describe('status payload normalization', () => {
   it('normalizes labels, keeps messaging and calls distinct, and uses preferred order', () => {
@@ -11,7 +11,7 @@ describe('status payload normalization', () => {
       { id: 'calls', name: 'Voice & video', state: 'degraded' },
       { id: 'media', name: 'Media & uploads', state: 'operational' },
       { id: 'account', name: 'Account & membership', state: 'operational' },
-      { id: 'website', name: 'Website', state: 'operational' },
+      { id: 'website', name: 'Web services', state: 'operational' },
     ]);
   });
 
@@ -28,6 +28,7 @@ describe('status payload normalization', () => {
         matrix: 'ok',
         media: 'ok',
         calls: 'ok',
+        turn: 'ok',
         membership: 'ok',
       },
     });
@@ -37,6 +38,30 @@ describe('status payload normalization', () => {
     expect(parsed.snapshotAgeSeconds).toBe(12.4);
     expect(parsed.generatedAt).toBe('2026-08-30T18:00:00Z');
     expect(parsed.components).toHaveLength(6);
+    expect(parsed.checks.turn).toBe('operational');
+  });
+
+  it('treats a TURN-only outage as degraded calling and preserves the underlying impact', () => {
+    const parsed = parseStatus({
+      status: 'degraded',
+      stale: false,
+      checks: {
+        website: 'ok',
+        login: 'ok',
+        matrix: 'ok',
+        media: 'ok',
+        calls: 'ok',
+        turn: 'down',
+        membership: 'ok',
+      },
+    });
+
+    const calls = parsed.components.find(({ id }) => id === 'calls');
+    expect(parsed.overall).toBe('degraded');
+    expect(calls).toEqual({ id: 'calls', name: 'Voice & video', state: 'degraded' });
+    expect(parsed.components.some(({ id }) => id === 'other-turn')).toBe(false);
+    expect(parsed.checks.turn).toBe('unavailable');
+    expect(serviceImpact(calls, parsed)).toBe('The Matrix homeserver and MatrixRTC core remain available, but TURN is unavailable. Legacy calling is degraded and calls may fail in restrictive network conditions.');
   });
 
   it('preserves a stale healthy snapshot instead of treating the response as fresh', () => {
@@ -67,6 +92,7 @@ describe('status payload normalization', () => {
     expect(parsed).toMatchObject({
       overall: 'unknown',
       components: [],
+      checks: {},
       generatedAt: null,
       snapshotAgeSeconds: null,
       stale: true,
@@ -123,7 +149,7 @@ describe('status payload normalization', () => {
     expect(parsed.generatedAt).toBe('2026-08-30T12:00:00Z');
     expect(parsed.components).toEqual([
       { id: 'messaging', name: 'Messaging', state: 'degraded' },
-      { id: 'website', name: 'Website', state: 'operational' },
+      { id: 'website', name: 'Web services', state: 'operational' },
     ]);
   });
 
@@ -139,7 +165,7 @@ describe('status payload normalization', () => {
 
     expect(parsed.overall).toBe('unavailable');
     expect(parsed.components).toEqual([
-      { id: 'website', name: 'Website', state: 'operational' },
+      { id: 'website', name: 'Web services', state: 'operational' },
       { id: 'other-bridgeservice', name: 'Bridge Service', state: 'unavailable' },
     ]);
     expect(parsed.components.map(({ id }) => id)).not.toEqual(expect.arrayContaining([
