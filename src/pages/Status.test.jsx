@@ -22,10 +22,10 @@ describe('Status page', () => {
     render(<Status />);
 
     expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
-    expect(screen.getByText(/website remains available/i)).toBeInTheDocument();
-    expect(screen.getByText('5 CK Conflux services are currently affected. The website remains available.')).toBeInTheDocument();
+    expect(screen.getByText(/web services remain available/i)).toBeInTheDocument();
+    expect(screen.getByText('5 CK Conflux services are currently affected. Web services remain available.')).toBeInTheDocument();
 
-    const website = screen.getByText('Website').closest('li');
+    const website = screen.getByText('Web services').closest('li');
     const signin = screen.getByText('Sign in').closest('li');
     expect(website).toHaveTextContent('Operational');
     expect(website).toHaveAttribute('data-state', 'operational');
@@ -46,6 +46,30 @@ describe('Status page', () => {
     expect(screen.queryByText('Synapse degraded')).not.toBeInTheDocument();
   });
 
+  it('explains a TURN-only disruption without claiming Matrix messaging is down', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      status: 'degraded',
+      stale: false,
+      checks: {
+        website: 'ok',
+        login: 'ok',
+        matrix: 'ok',
+        media: 'ok',
+        calls: 'ok',
+        turn: 'down',
+        membership: 'ok',
+      },
+    }, false, 503)));
+    render(<Status />);
+
+    expect(await screen.findByRole('heading', { name: 'Some services are degraded' })).toBeInTheDocument();
+    const calls = screen.getByText('Voice & video').closest('li');
+    expect(calls).toHaveAttribute('data-state', 'degraded');
+    expect(calls).toHaveTextContent('The Matrix homeserver and MatrixRTC core remain available, but TURN is unavailable. Legacy calling is degraded and calls may fail in restrictive network conditions.');
+    expect(screen.getByText('Messaging').closest('li')).toHaveAttribute('data-state', 'operational');
+    expect(screen.queryByText('Turn')).not.toBeInTheDocument();
+  });
+
   it('does not overstate the outage breadth when only one component is affected', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
       status: 'down',
@@ -54,7 +78,7 @@ describe('Status page', () => {
     render(<Status />);
 
     expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
-    expect(screen.getByText('One or more CK Conflux services are currently unavailable. The website remains available.')).toBeInTheDocument();
+    expect(screen.getByText('One or more CK Conflux services are currently unavailable. Web services remain available.')).toBeInTheDocument();
     expect(screen.queryByText(/Several CK Conflux services/i)).not.toBeInTheDocument();
   });
 
@@ -124,6 +148,6 @@ describe('Status page', () => {
     expect(await screen.findByRole('heading', { name: 'Status information incomplete' })).toBeInTheDocument();
     expect(screen.getByText('Status information is incomplete; the status feed did not confirm a complete platform state.')).toBeInTheDocument();
     expect(screen.queryByText('Some service checks returned an unknown state.')).not.toBeInTheDocument();
-    expect(screen.getByText('Website').closest('li')).toHaveTextContent('Operational');
+    expect(screen.getByText('Web services').closest('li')).toHaveTextContent('Operational');
   });
 });

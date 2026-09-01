@@ -1,6 +1,12 @@
 import { Link } from '../router/Router';
 import { statusHeadline } from '../status/status';
 import { useLocalStatus } from '../status/useLocalStatus';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import {
+  StatusAmbientGlow,
+  STATUS_STATE_META,
+  StatusStateSignal,
+} from './StatusStateVisual';
 
 function relativeUpdateLabel(value) {
   const date = value ? new Date(value) : null;
@@ -15,6 +21,7 @@ function relativeUpdateLabel(value) {
 
 export default function StatusSummary() {
   const status = useLocalStatus({ refreshIntervalMs: 60000 });
+  const prefersReducedMotion = usePrefersReducedMotion();
   const affected = status.components.filter(({ state }) => state === 'degraded' || state === 'unavailable');
   const snapshotMissing = status.phase === 'ready' && status.noSnapshot;
 
@@ -53,14 +60,26 @@ export default function StatusSummary() {
   const staleNotice = snapshotMissing
     ? 'A status snapshot is not available yet.'
     : 'Showing the last reported service status.';
+  const displayState = status.phase === 'error' || status.stale
+    ? 'degraded'
+    : status.phase === 'ready'
+      ? status.overall
+      : 'unknown';
+  const meta = STATUS_STATE_META[displayState] ?? STATUS_STATE_META.unknown;
 
-  return <div className="min-h-24 rounded-2xl border border-white/10 bg-white/5 p-5">
-    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{status.stale ? 'Service status' : 'Live service status'}</p>
-    <p className="mt-2 text-lg font-semibold text-white" aria-live="polite">{message}</p>
-    {supporting && <p className="mt-1 text-sm text-slate-300">{supporting}</p>}
-    {freshness && <p className="mt-1 text-sm text-slate-400">{freshness}</p>}
-    {status.stale && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">{staleNotice}</p>}
-    {status.phase === 'ready' && !status.noSnapshot && status.refreshError && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">Unable to refresh status. Showing the last known update.</p>}
-    <Link to="/status" className="mt-3 inline-flex text-sm font-semibold text-cyan-200 hover:text-cyan-100">View details →</Link>
+  return <div data-state={displayState} className={`relative min-h-24 overflow-hidden rounded-2xl border p-5 ${meta.card}`}>
+    <StatusAmbientGlow state={displayState} reducedMotion={prefersReducedMotion} className="-right-12 -top-16 h-40 w-40" />
+    <div className="relative flex items-start gap-3">
+      <StatusStateSignal state={displayState} reducedMotion={prefersReducedMotion} />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">{status.stale ? 'Service status' : 'Live service status'}</p>
+        <p className="mt-2 text-lg font-semibold text-white" aria-live="polite">{message}</p>
+        {supporting && <p className="mt-1 text-sm text-slate-200">{supporting}</p>}
+        {freshness && <p className="mt-1 text-sm text-slate-300">{freshness}</p>}
+        {status.stale && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">{staleNotice}</p>}
+        {status.phase === 'ready' && !status.noSnapshot && status.refreshError && <p className="mt-1 text-sm font-semibold text-amber-100" role="status">Unable to refresh status. Showing the last known update.</p>}
+        <Link to="/status" className="mt-3 inline-flex text-sm font-semibold text-cyan-100 hover:text-white">View details →</Link>
+      </div>
+    </div>
   </div>;
 }
