@@ -24,11 +24,24 @@ describe('Status page', () => {
     expect(await screen.findByRole('heading', { name: 'Service outage detected' })).toBeInTheDocument();
     expect(screen.getByText(/website remains available/i)).toBeInTheDocument();
     expect(screen.getByText('5 CK Conflux services are currently affected. The website remains available.')).toBeInTheDocument();
-    expect(screen.getByText('Website').closest('li')).toHaveTextContent('Operational');
-    expect(screen.getByText('Sign in').closest('li')).toHaveTextContent('Degraded');
+
+    const website = screen.getByText('Website').closest('li');
+    const signin = screen.getByText('Sign in').closest('li');
+    expect(website).toHaveTextContent('Operational');
+    expect(website).toHaveAttribute('data-state', 'operational');
+    expect(website).toHaveClass('bg-emerald-400/[0.09]');
+    expect(signin).toHaveTextContent('Degraded');
+    expect(signin).toHaveAttribute('data-state', 'degraded');
+    expect(signin).toHaveClass('bg-amber-400/10');
     for (const name of ['Messaging', 'Voice & video', 'Media & uploads', 'Account & membership']) {
-      expect(screen.getByText(name).closest('li')).toHaveTextContent('Unavailable');
+      const card = screen.getByText(name).closest('li');
+      expect(card).toHaveTextContent('Unavailable');
+      expect(card).toHaveAttribute('data-state', 'unavailable');
+      expect(card).toHaveClass('bg-rose-400/10');
     }
+    expect(screen.getByText('1 operational')).toBeInTheDocument();
+    expect(screen.getByText('1 degraded')).toBeInTheDocument();
+    expect(screen.getByText('4 unavailable')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Status information unavailable' })).not.toBeInTheDocument();
     expect(screen.queryByText('Synapse degraded')).not.toBeInTheDocument();
   });
@@ -52,8 +65,9 @@ describe('Status page', () => {
     expect(await screen.findByRole('heading', { name: 'All systems operational' })).toBeInTheDocument();
     expect(screen.getByText('All reported services are healthy.')).toBeInTheDocument();
     expect(screen.queryByText('Messaging, sign-in, calls, media, and account services are reporting healthy.')).not.toBeInTheDocument();
-    expect(screen.getByText('Messaging')).toBeInTheDocument();
-    expect(screen.getByText('Sign in')).toBeInTheDocument();
+    expect(screen.getByText('Messaging').closest('li')).toHaveClass('bg-emerald-400/[0.09]');
+    expect(screen.getByText('Sign in').closest('li')).toHaveClass('bg-emerald-400/[0.09]');
+    expect(screen.getByText('2 operational')).toBeInTheDocument();
     expect(screen.queryByText('Voice & video')).not.toBeInTheDocument();
     expect(screen.queryByText('Media & uploads')).not.toBeInTheDocument();
     expect(screen.queryByText('Account & membership')).not.toBeInTheDocument();
@@ -82,6 +96,7 @@ describe('Status page', () => {
     expect(screen.queryByRole('heading', { name: 'All systems operational' })).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Showing the last reported service status.');
     expect(screen.getByRole('heading', { name: 'Services' })).toBeInTheDocument();
+    expect(screen.getByText('6 operational')).toBeInTheDocument();
   });
 
   it('renders the structured no-snapshot startup response without treating it as malformed', async () => {
