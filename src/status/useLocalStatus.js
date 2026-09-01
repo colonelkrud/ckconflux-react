@@ -5,6 +5,7 @@ const EMPTY_RESULT = {
   phase: 'loading',
   overall: 'unknown',
   components: [],
+  checks: {},
   generatedAt: null,
   snapshotAgeSeconds: null,
   messages: [],
