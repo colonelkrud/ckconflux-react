@@ -31,6 +31,116 @@ header.sticky > div > a[href="/"]:first-child::before {
   background: url('/brand/v1/ckconflux-symbol.svg') center / contain no-repeat;
 }
 
+.network-globe-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: paint;
+}
+
+.network-globe__aurora {
+  position: absolute;
+  inset: -12% -8% auto auto;
+  width: min(74rem, 112vw);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle at 58% 42%, rgba(34, 211, 238, 0.09), transparent 34%),
+    radial-gradient(circle at 48% 52%, rgba(59, 130, 246, 0.045), transparent 52%);
+}
+
+.network-globe__svg {
+  position: absolute;
+  top: clamp(2.5rem, 7vh, 6rem);
+  right: max(-18rem, -17vw);
+  width: min(82rem, 116vw);
+  height: auto;
+  opacity: 0.58;
+}
+
+.network-globe__sphere > * {
+  vector-effect: non-scaling-stroke;
+  stroke: rgba(103, 232, 249, 0.13);
+  stroke-width: 0.9;
+}
+
+.network-globe__route,
+.network-globe__flow {
+  vector-effect: non-scaling-stroke;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.network-globe__route {
+  stroke: rgba(103, 232, 249, 0.11);
+  stroke-width: 1;
+}
+
+.network-globe__flow {
+  stroke: rgba(103, 232, 249, 0.5);
+  stroke-width: 1.25;
+  stroke-dasharray: 1.15 9.5;
+  stroke-dashoffset: 0;
+  opacity: 0.7;
+  animation: network-globe-flow var(--network-flow-duration, 14s) linear infinite;
+  animation-delay: var(--network-flow-delay, 0s);
+}
+
+.network-globe__node-ring,
+.network-globe__node {
+  vector-effect: non-scaling-stroke;
+}
+
+.network-globe__node-ring {
+  fill: rgba(34, 211, 238, 0.025);
+  stroke: rgba(103, 232, 249, 0.16);
+  stroke-width: 0.8;
+}
+
+.network-globe__node {
+  fill: rgba(165, 243, 252, 0.72);
+}
+
+@keyframes network-globe-flow {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@media (max-width: 767px) {
+  .network-globe__aurora {
+    top: 2rem;
+    right: 50%;
+    width: 54rem;
+    transform: translateX(50%);
+    opacity: 0.82;
+  }
+
+  .network-globe__svg {
+    top: 5rem;
+    right: auto;
+    left: 50%;
+    width: 50rem;
+    max-width: none;
+    transform: translateX(-50%);
+    opacity: 0.42;
+  }
+
+  .network-globe__route--secondary {
+    display: none;
+  }
+
+  .network-globe__sphere > * {
+    stroke: rgba(103, 232, 249, 0.105);
+  }
+
+  .network-globe__flow {
+    opacity: 0.5;
+  }
+}
+
 :focus-visible {
   outline: 2px solid #67e8f9;
   outline-offset: 3px;
@@ -42,5 +152,10 @@ header.sticky > div > a[href="/"]:first-child::before {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .network-globe__flow {
+    animation: none !important;
+    opacity: 0.22;
   }
 }
