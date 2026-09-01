@@ -22,7 +22,8 @@ function renderMetadata(pathname, { notFound = false } = {}) {
     .replace(/<meta\s+name=["']description["'][^>]*>/i, `<meta name="description" content="${description}" />`);
 
   const routeTags = [
-    notFound ? `<meta name="robots" content="${escapeHtml(metadata.robots)}" />` : `<link rel="canonical" href="${url}" />`,
+    `<link rel="canonical" href="${url}" />`,
+    ...(metadata.robots ? [`<meta name="robots" content="${escapeHtml(metadata.robots)}" />`] : []),
     '<meta property="og:type" content="website" />',
     `<meta property="og:title" content="${title}" />`,
     `<meta property="og:description" content="${description}" />`,

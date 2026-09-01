@@ -17,9 +17,11 @@ import Support from '../pages/Support';
 import Membership from '../pages/Membership';
 import Join from '../pages/Join';
 import About from '../pages/About';
+import Migrate from '../pages/Migrate';
+import MigrationLayout from '../layout/MigrationLayout';
 import { useRouter } from './Router';
 
-const routes = {'/': <Home />, '/about': <About />, '/join': <Join />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
+const routes = {'/': <Home />, '/about': <About />, '/join': <Join />, '/migrate': <Migrate />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
 
 export default function AppRouter() {
   const { pathname, navigationKey } = useRouter();
@@ -29,5 +31,6 @@ export default function AppRouter() {
     const heading = document.querySelector('#main-content h1');
     if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus(); }
   }, [navigationKey]);
-  return <><Metadata pathname={pathname} /><SiteLayout>{page}</SiteLayout></>;
+  const Layout = pathname === '/migrate' ? MigrationLayout : SiteLayout;
+  return <><Metadata pathname={pathname} /><Layout>{page}</Layout></>;
 }
