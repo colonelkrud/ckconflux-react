@@ -160,7 +160,7 @@ export function serviceImpact(component, status) {
 
   if (component.id === 'messaging') {
     return unavailable
-      ? 'The Matrix homeserver is unavailable. Sending and receiving messages may fail until service is restored.'
+      ? 'The Matrix homeserver is unavailable. Messages may be delayed or fail until service is restored.'
       : 'The Matrix homeserver is degraded. Messages may be delayed or fail intermittently.';
   }
 
