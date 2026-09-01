@@ -51,7 +51,7 @@ export default function NetworkGlobeBackground() {
       </g>
 
       <g className="network-globe__routes">
-        {ROUTES.map((route, index) => <g key={route.d} className={route.secondary ? 'network-globe__route--secondary' : undefined}>
+        {ROUTES.map((route) => <g key={route.d} className={route.secondary ? 'network-globe__route--secondary' : undefined}>
           <path d={route.d} className="network-globe__route" />
           <path
             d={route.d}
