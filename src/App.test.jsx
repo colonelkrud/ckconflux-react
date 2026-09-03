@@ -293,10 +293,10 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).not.toHaveTextContent('Mastodon');
   });
 
-  it('does not market Foundry VTT', () => {
+  it('does not market Foundry VTT in existing page content', () => {
     for (const path of ['/', '/why-ck-conflux', '/matrix', '/calls', '/teamspeak', '/privacy', '/security', '/help', '/support']) {
       const view = renderPath(path);
-      expect(document.body).not.toHaveTextContent(/Foundry VTT/i);
+      expect(document.querySelector('#main-content')).not.toHaveTextContent(/Foundry VTT/i);
       view.unmount();
     }
   });

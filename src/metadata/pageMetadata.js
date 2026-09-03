@@ -15,10 +15,11 @@ const descriptions = {
   '/help': 'Find CK Conflux onboarding guidance, frequently asked questions, and support resources.',
   '/support': 'Find the right CK Conflux route for learning, accounts, recovery, moderation, privacy, outages, or membership.',
   '/teamspeak': 'Connect to the optional CK Conflux TeamSpeak 6 Beta service and understand its limitations.',
+  '/foundry': 'Choose a CK Conflux Foundry Virtual Tabletop server, view its weekly schedule and live status, and join your game.',
   '/terms': 'Read the CK Conflux terms of use.',
   '/rules': 'Read the CK Conflux community server rules.',
 };
-const labels = {'/':'Home','/about':'About CK Conflux','/join':'Join CK Conflux','/migrate':'ColonelKrud Migration','/why-ck-conflux':'Why CK Conflux','/matrix':'Matrix and Element','/calls':'Element Call','/membership':'Membership','/security':'Security','/privacy':'Privacy Policy','/status':'Status','/help':'Help','/support':'Support','/teamspeak':'TeamSpeak 6 Beta','/terms':'Terms of Use','/rules':'Server Rules'};
+const labels = {'/':'Home','/about':'About CK Conflux','/join':'Join CK Conflux','/migrate':'ColonelKrud Migration','/why-ck-conflux':'Why CK Conflux','/matrix':'Matrix and Element','/calls':'Element Call','/membership':'Membership','/security':'Security','/privacy':'Privacy Policy','/status':'Status','/help':'Help','/support':'Support','/teamspeak':'TeamSpeak 6 Beta','/foundry':'Foundry VTT','/terms':'Terms of Use','/rules':'Server Rules'};
 
 export const ROUTE_PATHS = Object.freeze(Object.keys(labels));
 
