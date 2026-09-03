@@ -47,6 +47,7 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('navigation', { name: 'Explore links' })).toHaveTextContent('Status');
     expect(screen.getByRole('navigation', { name: 'Explore links' })).toHaveTextContent('About');
     expect(screen.getByRole('navigation', { name: 'Community links' })).toHaveTextContent('Support');
+    expect(screen.getByRole('navigation', { name: 'Community links' }).querySelector('a[href="https://buymeacoffee.com/conflux"]')).toHaveTextContent('Support CK Conflux');
     expect(screen.getByRole('navigation', { name: 'Legal links' })).toHaveTextContent('Privacy');
   });
 
@@ -107,8 +108,14 @@ describe('CK Conflux application architecture', () => {
     renderPath('/membership');
     const accountLinks = screen.getAllByRole('link', { name: /My Account/i });
     expect(accountLinks.some((link) => link.getAttribute('href') === 'https://account.ckconflux.com')).toBe(true);
-    expect(screen.getByText(/Membership, storage, and account administration/)).toHaveTextContent(/authoritative.*actual current total capacity, monthly allowance, usage, and entitlement/i);
-    expect(screen.getByText(/Messaging, community rooms, and calls/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open My Account' })).toHaveAttribute('href', 'https://account.ckconflux.com');
+    expect(screen.getByRole('heading', { name: 'Registration codes (invite codes)' })).toBeInTheDocument();
+    expect(screen.getByText(/View your membership and supporter status/i)).toHaveTextContent(/subscription state.*membership associations/i);
+    expect(screen.getByText(/See your current storage allowance/i)).toHaveTextContent(/current media usage.*benefits and entitlements/i);
+    expect(screen.getByText(/My Account does not manage Matrix passwords/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Reset password' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/forgot_password');
+    expect(screen.getByText(/For messaging, rooms, and calls, use Element/i)).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/Two clear destinations|Manage or communicate/i);
     expect(screen.getAllByRole('link', { name: 'Open Element' }).some((link) => link.getAttribute('href') === 'https://element.ckconflux.com')).toBe(true);
   });
 
@@ -127,9 +134,9 @@ describe('CK Conflux application architecture', () => {
 
   it('offers a voluntary supporter path while My Account remains authoritative', () => {
     renderPath('/membership');
-    expect(screen.getByRole('link', { name: 'Support CK Conflux' })).toHaveAttribute('href', 'https://buymeacoffee.com/conflux');
+    expect(screen.getAllByRole('link', { name: 'Support CK Conflux' }).every((link) => link.getAttribute('href') === 'https://buymeacoffee.com/conflux')).toBe(true);
     expect(screen.getByText(/Support is voluntary/i)).toHaveTextContent(/Critical messaging, calls, and community participation remain free/i);
-    expect(screen.getByText(/Membership, storage, and account administration/)).toHaveTextContent(/My Account is authoritative/i);
+    expect(screen.getByText(/My Account is the home for membership/i)).toHaveTextContent(/community services associated with your CK Conflux Matrix account/i);
     expect(document.body).not.toHaveTextContent(/\$\d+|per month|supporter tier.*GiB/i);
   });
 
@@ -137,7 +144,6 @@ describe('CK Conflux application architecture', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     renderPath('/membership');
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(screen.getByText(/public site does not retrieve them/i)).toBeInTheDocument();
     fetchSpy.mockRestore();
   });
 
@@ -247,7 +253,8 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('heading', { name: 'Why require a token?' })).toBeInTheDocument();
     expect(screen.getByText(/existing CK Conflux member/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Buy Me a Coffee' })).toHaveAttribute('href', 'https://buymeacoffee.com/conflux');
-    expect(screen.getByText(/Invitation from an existing CK Conflux member is one path/i)).toHaveTextContent(/Payment is not required to join/i);
+    expect(screen.getByRole('heading', { name: 'Already know a member?' }).closest('article')).toHaveTextContent(/share a registration code.*privately/i);
+    expect(screen.getByText(/Payment is not required to join CK Conflux/i).closest('p')).toHaveTextContent(/valid registration code is required regardless.*Support is always voluntary/i);
     expect(screen.getByText(/token, an available username, an email address, and an account password/i)).toBeInTheDocument();
     expect(screen.getByText(/makes the enabled password-recovery path possible/i)).toBeInTheDocument();
     expect(screen.getByText('@name:ckconflux.com')).toBeInTheDocument();

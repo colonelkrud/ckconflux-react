@@ -1,7 +1,7 @@
-import { Database, Gauge, Globe2, HardDrive, Heart, Server, ShieldCheck, Wifi } from 'lucide-react';
+import { Database, Gauge, Gift, Globe2, HardDrive, Heart, KeyRound, Server, ShieldCheck, UserRound, Wifi } from 'lucide-react';
 import { createElement } from 'react';
 import { ExternalLink, SiteLink } from '../components/SiteLink';
-import { ACCOUNT_PORTAL_URL, COMMUNITY_MEDIA_ALLOWANCES, COMMUNITY_MEDIA_POLICY, SUPPORTER_URL } from '../config/community';
+import { ACCOUNT_PORTAL_URL, COMMUNITY_MEDIA_ALLOWANCES, COMMUNITY_MEDIA_POLICY, PASSWORD_RECOVERY_URL, SUPPORTER_URL } from '../config/community';
 
 const infrastructure = [
   [Server, 'Hosting & compute'],
@@ -66,14 +66,19 @@ export default function Membership() {
         <p className="mt-4 leading-7 text-slate-300">At roughly 1 MB per photo, the {COMMUNITY_MEDIA_ALLOWANCES.total.gibibytes} GiB <strong className="font-semibold text-white">total capacity</strong> is on the order of {illustrativePhotoCount.toLocaleString('en-US')} stored photos.</p>
         <p className="mt-4 rounded-xl border border-amber-200/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50"><strong>This total-capacity example is only an illustration, not a monthly upload guarantee.</strong> Actual image sizes vary substantially with resolution, compression, format, device, and quality settings. It is not a guaranteed file count, and allowances may change as the service evolves.</p>
       </div>
-      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-        <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Two clear destinations</p>
-        <h2 className="mt-3 text-2xl font-semibold text-white">Manage or communicate</h2>
-        <div className="mt-6 space-y-6">
-          <div><h3 className="font-semibold text-white">My Account</h3><p className="mt-1 text-sm leading-6 text-slate-300">Membership, storage, and account administration. My Account is authoritative for your signed-in account’s actual current total capacity, monthly allowance, usage, and entitlement. It also provides supporter association and supported gift or benefit workflows when available.</p><ExternalLink href={ACCOUNT_PORTAL_URL} className="mt-3 inline-flex font-semibold text-cyan-200 underline underline-offset-4">Go to My Account</ExternalLink></div>
-          <div className="border-t border-white/10 pt-6"><h3 className="font-semibold text-white">Open Element</h3><p className="mt-1 text-sm leading-6 text-slate-300">Messaging, community rooms, and calls. Use Element to participate—not to administer membership or storage.</p><ExternalLink href="https://element.ckconflux.com" className="mt-3 inline-flex font-semibold text-cyan-200 underline underline-offset-4">Open Element</ExternalLink></div>
+      <div className="rounded-3xl border border-cyan-300/20 bg-cyan-400/[0.06] p-7">
+        <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">CK Conflux account services</p>
+        <h2 className="mt-3 text-3xl font-semibold text-white">My Account</h2>
+        <p className="mt-3 text-lg font-semibold text-slate-100">Manage your membership and community account benefits</p>
+        <p className="mt-3 text-sm leading-6 text-slate-300">My Account is the home for membership and community services associated with your CK Conflux Matrix account.</p>
+        <div className="mt-6 grid gap-4">
+          <article className="rounded-2xl border border-white/10 bg-slate-950/35 p-4"><UserRound aria-hidden="true" className="h-5 w-5 text-cyan-200" /><h3 className="mt-2 font-semibold text-white">Membership and subscriptions</h3><p className="mt-1 text-sm leading-6 text-slate-300">View your membership and supporter status, check subscription state, manage supported membership associations, and access subscription management where available. You can also connect and manage an eligible Buy Me a Coffee membership.</p></article>
+          <article className="rounded-2xl border border-white/10 bg-slate-950/35 p-4"><KeyRound aria-hidden="true" className="h-5 w-5 text-cyan-200" /><h3 className="mt-2 font-semibold text-white">Registration codes (invite codes)</h3><p className="mt-1 text-sm leading-6 text-slate-300">Create, view, and manage registration codes, then share them privately to invite others to CK Conflux.</p></article>
+          <article className="rounded-2xl border border-white/10 bg-slate-950/35 p-4"><Gift aria-hidden="true" className="h-5 w-5 text-cyan-200" /><h3 className="mt-2 font-semibold text-white">Storage and benefits</h3><p className="mt-1 text-sm leading-6 text-slate-300">See your current storage allowance, current media usage, and the membership benefits and entitlements associated with your account.</p></article>
         </div>
-        <p className="mt-6 text-xs leading-5 text-slate-400">Sign-in and user-specific account data stay in the dedicated account portal; this public site does not retrieve them.</p>
+        <ExternalLink href={ACCOUNT_PORTAL_URL} className="mt-6 inline-flex rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">Open My Account</ExternalLink>
+        <aside className="mt-6 rounded-2xl border border-amber-200/20 bg-amber-300/[0.06] p-5" aria-labelledby="password-help-heading"><h3 id="password-help-heading" className="font-semibold text-white">Password or sign-in help?</h3><p className="mt-2 text-sm leading-6 text-slate-300">My Account does not manage Matrix passwords. Password resets and account recovery use the existing Matrix Authentication Service (MAS)-backed authentication and recovery flow.</p><ExternalLink href={PASSWORD_RECOVERY_URL} className="mt-3 inline-flex font-semibold text-amber-100 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">Reset password</ExternalLink></aside>
+        <p className="mt-5 text-sm leading-6 text-slate-300"><strong className="text-white">For messaging, rooms, and calls, use Element.</strong> My Account is for membership, registration codes, storage, and benefits; authentication and recovery handle sign-in credentials.</p>
       </div>
       <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-white/[0.03] p-7">
         <p className="text-sm font-semibold uppercase tracking-widest text-cyan-200">Media lifecycle</p>
