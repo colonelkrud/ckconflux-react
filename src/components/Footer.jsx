@@ -1,8 +1,8 @@
 import { ExternalLink, SiteLink } from './SiteLink';
-import { ACCOUNT_PORTAL_URL } from '../config/community';
+import { ACCOUNT_PORTAL_URL, SUPPORTER_URL } from '../config/community';
 const groups = [
   ['Explore', [['About','/about'],['Join','/join'],['Membership','/membership'],['My Account',ACCOUNT_PORTAL_URL, true],['Security','/security'],['Status','/status']]],
-  ['Community', [['Help','/help'],['Support','/support'],['TeamSpeak 6 Beta','/teamspeak']]],
+  ['Community', [['Help','/help'],['Support','/support'],['Support CK Conflux',SUPPORTER_URL, true],['TeamSpeak 6 Beta','/teamspeak']]],
   ['Legal', [['Privacy','/privacy'],['Terms','/terms'],['Rules','/rules']]],
 ];
 export default function Footer() {
