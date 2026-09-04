@@ -18,10 +18,11 @@ import Membership from '../pages/Membership';
 import Join from '../pages/Join';
 import About from '../pages/About';
 import Migrate from '../pages/Migrate';
+import Foundry from '../pages/Foundry';
 import MigrationLayout from '../layout/MigrationLayout';
 import { useRouter } from './Router';
 
-const routes = {'/': <Home />, '/about': <About />, '/join': <Join />, '/migrate': <Migrate />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
+const routes = {'/': <Home />, '/about': <About />, '/join': <Join />, '/migrate': <Migrate />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/foundry': <Foundry />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
 
 export default function AppRouter() {
   const { pathname, navigationKey } = useRouter();
