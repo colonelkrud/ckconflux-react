@@ -1,4 +1,6 @@
 export const FOUNDRY_STATUS_ENDPOINT = '/foundry-status.json';
+export const FOUNDRY_STATUS_POLL_INTERVAL_MS = 45_000;
+export const FOUNDRY_STATUS_TIMEOUT_MS = 8_000;
 
 export const FOUNDRY_SERVERS = Object.freeze([
   Object.freeze({

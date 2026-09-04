@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseFoundryStatus } from './foundryStatus';
+import { parseStatus } from '../status/status';
 
 const payload = (servers, extra = {}) => ({ generated_at: '2026-09-02T20:30:00Z', stale: false, servers, ...extra });
 
@@ -23,5 +24,11 @@ describe('Foundry status contract', () => {
 
   it('maps missing servers and future status values to unknown', () => {
     expect(parseFoundryStatus(payload({ fvtt1: { status: 'maintenance' } }))).toEqual({ fvtt1: 'unknown', fvtt2: 'unknown' });
+  });
+
+  it('does not feed the Foundry contract into global status or incident severity', () => {
+    const foundryPayload = payload({ fvtt1: { status: 'down' }, fvtt2: { status: 'up' } });
+    expect(parseFoundryStatus(foundryPayload)).toEqual({ fvtt1: 'offline', fvtt2: 'online' });
+    expect(parseStatus(foundryPayload)).toBeNull();
   });
 });
