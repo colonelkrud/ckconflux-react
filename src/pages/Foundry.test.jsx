@@ -32,6 +32,21 @@ describe('Foundry landing page', () => {
     }
   });
 
+  it('uses lightweight Checking motion only when reduced motion is not requested', async () => {
+    const matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+    vi.stubGlobal('matchMedia', matchMedia);
+    render(<FoundryServerCard server={FOUNDRY_SERVERS[0]} status="checking" />);
+
+    const indicator = document.querySelector('[data-status-indicator="checking"]');
+    await waitFor(() => expect(indicator).not.toHaveClass('animate-pulse'));
+    expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
+    expect(screen.getByRole('status')).toHaveTextContent('Checking');
+  });
+
   it('uses canonical voluntary-support messaging and footer discoverability', () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
     renderFoundry();
