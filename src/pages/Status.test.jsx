@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import Status from './Status';
 
@@ -10,6 +10,23 @@ afterEach(() => {
 });
 
 describe('Status page', () => {
+  it('shows the daily maintenance guidance between services and uptime history', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ checks: { website: 'ok' } })));
+    render(<Status />);
+
+    const services = await screen.findByRole('heading', { name: 'Services' });
+    const maintenance = screen.getByRole('region', { name: 'Daily maintenance window' });
+    const uptimeHistory = screen.getByRole('link', { name: /View uptime history/ });
+
+    expect(within(maintenance).getByText('6:00 AM UTC')).toBeInTheDocument();
+    expect(within(maintenance).getByText('4 hours')).toBeInTheDocument();
+    expect(within(maintenance).getByText('Daily')).toBeInTheDocument();
+    expect(within(maintenance).getByText(/Maintenance usually lasts under 10 minutes/)).toHaveTextContent('most applications do not experience any downtime');
+    expect(within(maintenance).getByText(/voice calling and screen sharing/)).toHaveTextContent('may disconnect briefly');
+    expect(services.compareDocumentPosition(maintenance) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(maintenance.compareDocumentPosition(uptimeHistory) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('renders a production-style HTTP 503 outage while preserving all six component states', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
       status: 'down',
@@ -139,6 +156,8 @@ describe('Status page', () => {
     expect(screen.getByText('Current service status is not available yet.')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Services' })).not.toBeInTheDocument();
     expect(screen.getByText('A status snapshot is not available yet.')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Daily maintenance window' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /View uptime history/ })).toBeInTheDocument();
   });
 
   it('uses neutral incomplete wording when only the feed-level state is unknown', async () => {

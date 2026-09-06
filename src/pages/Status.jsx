@@ -1,5 +1,5 @@
 import { motion as Motion } from 'framer-motion';
-import { RefreshCw } from 'lucide-react';
+import { Clock3, RefreshCw } from 'lucide-react';
 import { ExternalLink } from '../components/SiteLink';
 import {
   StatusAmbientGlow,
@@ -51,6 +51,28 @@ function StateCount({ state, count }) {
     <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${meta.bar}`} />
     {count} {stateLabel(state).toLowerCase()}
   </span>;
+}
+
+function MaintenanceNotice() {
+  return <section className="mt-10 rounded-2xl border border-cyan-200/20 bg-white/[0.04] p-5 sm:p-6" aria-labelledby="maintenance-window">
+    <div className="flex items-start gap-4">
+      <div className="rounded-xl border border-cyan-200/20 bg-cyan-300/[0.07] p-2.5 text-cyan-200">
+        <Clock3 aria-hidden="true" size={20} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h2 id="maintenance-window" className="text-xl font-semibold text-white">Daily maintenance window</h2>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div><dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Window start</dt><dd className="mt-1 font-semibold text-cyan-100">6:00 AM UTC</dd></div>
+          <div><dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Window duration</dt><dd className="mt-1 font-semibold text-cyan-100">4 hours</dd></div>
+          <div><dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Frequency</dt><dd className="mt-1 font-semibold text-cyan-100">Daily</dd></div>
+        </dl>
+        <div className="mt-5 space-y-2 border-t border-white/10 pt-4 text-sm leading-6 text-slate-300 sm:text-base">
+          <p>Maintenance usually lasts under 10 minutes, and most applications do not experience any downtime.</p>
+          <p>Some real-time services, such as voice calling and screen sharing, may disconnect briefly while you are moved to another server.</p>
+        </div>
+      </div>
+    </div>
+  </section>;
 }
 
 export default function Status() {
@@ -117,6 +139,8 @@ export default function Status() {
         </Motion.li>;
       })}</ul>
     </section>}
+
+    <MaintenanceNotice />
 
     <div className="mt-10 border-t border-white/10 pt-6"><ExternalLink href={INDEPENDENT_STATUS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex text-sm font-semibold text-cyan-200 hover:text-cyan-100">View uptime history ↗ <span className="sr-only">(opens in a new tab)</span></ExternalLink></div>
   </div>;
