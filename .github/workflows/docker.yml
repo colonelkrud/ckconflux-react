@@ -50,6 +50,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: ./scripts/validate-nginx.sh "${{ steps.meta.outputs.image_name }}:sha-${{ steps.meta.outputs.short_sha }}"
 
+      - name: Validate production React bundle
+        if: github.event_name == 'pull_request'
+        run: ./scripts/validate-production-bundle.sh "${{ steps.meta.outputs.image_name }}:sha-${{ steps.meta.outputs.short_sha }}"
+
       - name: Build and push image (main)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
