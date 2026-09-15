@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ELEMENT_REGISTRATION_URL, REGISTRATION_EVENT } from '../config/registrationEvent';
 
 const TURNSTILE_SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+const SCRIPT_TIMEOUT_MS = 10000;
 const REQUEST_TIMEOUT_MS = 10000;
 
 function messageFor(state) {
@@ -19,68 +20,133 @@ function messageFor(state) {
 
 export default function RegisterEvent() {
   const widgetHost = useRef(null);
-  const widgetId = useRef(null);
-  const consumedResponse = useRef(false);
+  const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState('loading');
   const [result, setResult] = useState(null);
   const [copyState, setCopyState] = useState('idle');
 
-  const requestToken = useCallback(async (turnstileResponse) => {
-    if (!turnstileResponse || consumedResponse.current) return;
-    consumedResponse.current = true;
-    setResult(null);
-    setState('verified');
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    try {
-      setState('requesting');
-      const response = await fetch(REGISTRATION_EVENT.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ turnstile_response: turnstileResponse }),
-        signal: controller.signal,
-      });
-      if (response.status === 429) { setState('limited'); return; }
-      if (!response.ok) { setState(response.status >= 500 ? 'unavailable' : 'rejected'); return; }
-      const body = await response.json();
-      if (typeof body.registration_token !== 'string' || !body.registration_token) { setState('unavailable'); return; }
-      setResult({ campaign: body.campaign || REGISTRATION_EVENT.campaign, token: body.registration_token, expiresAt: body.expires_at || null });
-      setState('success');
-    } catch {
-      setState('unavailable');
-    } finally {
-      clearTimeout(timeout);
-    }
-  }, []);
-
-  const renderWidget = useCallback(() => {
-    if (!widgetHost.current || !window.turnstile || widgetId.current !== null) return;
-    widgetId.current = window.turnstile.render(widgetHost.current, {
-      sitekey: REGISTRATION_EVENT.sitekey,
-      action: REGISTRATION_EVENT.action,
-      callback: requestToken,
-      'expired-callback': () => { consumedResponse.current = true; setResult(null); setState('expired'); },
-      'error-callback': () => { consumedResponse.current = true; setResult(null); setState('rejected'); },
-    });
-    setState('ready');
-  }, [requestToken]);
-
   useEffect(() => {
-    if (window.turnstile) { renderWidget(); return undefined; }
-    const existing = document.querySelector(`script[src="${TURNSTILE_SCRIPT}"]`);
-    const script = existing || document.createElement('script');
-    const onLoad = () => renderWidget();
-    script.addEventListener('load', onLoad);
-    if (!existing) { script.src = TURNSTILE_SCRIPT; script.async = true; script.defer = true; document.head.append(script); }
-    return () => script.removeEventListener('load', onLoad);
-  }, [renderWidget]);
+    // Each attempt owns its callbacks, widget and request. Cleanup invalidates all
+    // of them before a manual retry, route change or Strict Mode remount.
+    let active = true;
+    let consumedResponse = false;
+    let widgetId = null;
+    let widgetApi = null;
+    let script = null;
+    let loadTimeout;
+    let requestTimeout;
+    let controller;
+
+    const requestToken = async (turnstileResponse) => {
+      if (!active || !turnstileResponse || consumedResponse) return;
+      consumedResponse = true;
+      setState('verified');
+      controller = new AbortController();
+      requestTimeout = setTimeout(() => {
+        controller.abort();
+        if (active) setState('unavailable');
+      }, REQUEST_TIMEOUT_MS);
+      try {
+        setState('requesting');
+        const response = await fetch(REGISTRATION_EVENT.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ turnstile_response: turnstileResponse }),
+          signal: controller.signal,
+        });
+        if (!active || controller.signal.aborted) return;
+        if (response.status === 429) { setState('limited'); return; }
+        if (!response.ok) { setState(response.status >= 500 ? 'unavailable' : 'rejected'); return; }
+        const body = await response.json();
+        if (!active || controller.signal.aborted) return;
+        if (typeof body?.registration_token !== 'string' || !body.registration_token) { setState('unavailable'); return; }
+        setResult({ campaign: body.campaign || REGISTRATION_EVENT.campaign, token: body.registration_token, expiresAt: body.expires_at || null });
+        setState('success');
+      } catch {
+        if (active) setState('unavailable');
+      } finally {
+        clearTimeout(requestTimeout);
+      }
+    };
+
+    const invalidateChallenge = (nextState) => {
+      // Once submitted, challenge expiry/errors must not overwrite the backend
+      // outcome or remove a separately issued registration token.
+      if (!active || consumedResponse) return;
+      consumedResponse = true;
+      setState(nextState);
+    };
+
+    function stopLoading() {
+      clearTimeout(loadTimeout);
+      script?.removeEventListener('load', renderWidget);
+      script?.removeEventListener('error', failLoading);
+    }
+
+    function failLoading() {
+      if (!active) return;
+      stopLoading();
+      // A failed script cannot be reused: the next attempt must make a new load.
+      script?.remove();
+      setState('unavailable');
+    }
+
+    function renderWidget() {
+      if (!active || widgetId !== null) return;
+      stopLoading();
+      widgetApi = window.turnstile;
+      if (!widgetApi?.render || !widgetHost.current) { failLoading(); return; }
+      try {
+        setState('ready');
+        widgetId = widgetApi.render(widgetHost.current, {
+          sitekey: REGISTRATION_EVENT.sitekey,
+          action: REGISTRATION_EVENT.action,
+          // Flexible widgets still require 300px; compact fits the 320px page.
+          size: 'compact',
+          retry: 'never',
+          'refresh-expired': 'never',
+          'refresh-timeout': 'never',
+          callback: requestToken,
+          'expired-callback': () => invalidateChallenge('expired'),
+          'timeout-callback': () => invalidateChallenge('expired'),
+          'error-callback': () => invalidateChallenge('rejected'),
+        });
+      } catch {
+        setState('unavailable');
+      }
+    }
+
+    if (window.turnstile?.render) {
+      renderWidget();
+    } else {
+      const existing = document.querySelector(`script[src="${TURNSTILE_SCRIPT}"]`);
+      script = existing || document.createElement('script');
+      script.addEventListener('load', renderWidget);
+      script.addEventListener('error', failLoading);
+      loadTimeout = setTimeout(failLoading, SCRIPT_TIMEOUT_MS);
+      if (!existing) {
+        script.src = TURNSTILE_SCRIPT;
+        script.async = true;
+        script.defer = true;
+        document.head.append(script);
+      }
+    }
+
+    return () => {
+      active = false;
+      stopLoading();
+      clearTimeout(requestTimeout);
+      controller?.abort();
+      if (widgetId !== null) widgetApi?.remove(widgetId);
+      if (!window.turnstile?.render) script?.remove();
+    };
+  }, [attempt]);
 
   const retry = () => {
-    consumedResponse.current = false;
     setResult(null);
     setCopyState('idle');
-    setState('ready');
-    if (widgetId.current !== null) window.turnstile?.reset(widgetId.current);
+    setState('loading');
+    setAttempt((previous) => previous + 1);
   };
 
   const copyToken = async () => {
@@ -95,7 +161,7 @@ export default function RegisterEvent() {
     </div></section>
     <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8"><div className="rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.07] p-6 sm:p-8">
       <h2 className="text-xl font-semibold text-white">Request a free registration token</h2>
-      <div ref={widgetHost} className="mt-5 min-h-[70px]" aria-label="Anti-automation challenge" />
+      <div ref={widgetHost} className="mt-5 min-h-[140px]" aria-label="Anti-automation challenge" />
       <p className="mt-3 text-sm text-slate-300" role="status" aria-live="polite">{state === 'success' ? 'Registration token ready.' : messageFor(state)}</p>
       {['expired', 'rejected', 'unavailable', 'limited'].includes(state) && <button type="button" onClick={retry} className="mt-4 rounded-xl border border-white/15 bg-white/10 px-5 py-3 font-semibold text-white">Run a new challenge</button>}
       {result && <div className="mt-6" aria-labelledby="registration-token-heading"><h3 id="registration-token-heading" className="font-semibold text-white">Your registration token</h3><p className="mt-2 text-sm text-slate-300">Campaign: {result.campaign}</p><div className="mt-3 flex flex-col gap-3 sm:flex-row"><code className="min-w-0 select-all overflow-x-auto rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-base font-semibold text-cyan-200">{result.token}</code><button type="button" onClick={copyToken} aria-label="Copy registration token" className="rounded-xl border border-white/15 bg-white/10 px-5 py-3 font-semibold text-white">{copyState === 'copied' ? 'Copied!' : 'Copy token'}</button></div>{result.expiresAt && <p className="mt-3 text-sm text-slate-300">Expires: <time dateTime={result.expiresAt}>{result.expiresAt}</time></p>}<p className="mt-3 min-h-6 text-sm text-slate-300" role="status" aria-live="polite">{copyState === 'copied' ? 'Registration token copied.' : copyState === 'unavailable' ? 'Copy unavailable. Select and copy the token manually.' : ''}</p><a href={ELEMENT_REGISTRATION_URL} className="mt-3 inline-flex w-full justify-center rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950 sm:w-auto">Continue to Element registration</a></div>}
