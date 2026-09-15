@@ -1,5 +1,5 @@
 import { PUBLIC_CONTACTS, SUPPORTER_URL } from '../config/community';
-import { Coffee, UserRound } from 'lucide-react';
+import { Coffee, ShieldCheck, UserRound } from 'lucide-react';
 import { ExternalLink } from '../components/SiteLink';
 import { Link } from '../router/Router';
 
@@ -21,8 +21,9 @@ export default function JoinPage() {
       <div><h2 className="text-2xl font-semibold text-white">Registration, step by step</h2><ol className="mt-5 space-y-4">
         <li className="rounded-2xl border border-cyan-300/30 bg-cyan-400/[0.06] p-5">
           <div className="flex gap-4"><span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-400 font-semibold text-slate-950">1</span><div><h3 className="font-semibold text-white">Get a registration token</h3><p className="mt-2 text-sm leading-6 text-slate-300">Choose either supported path below. Both provide the registration code needed to create an account.</p></div></div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
             <article className="rounded-2xl border border-white/15 bg-slate-950/40 p-5"><UserRound aria-hidden="true" className="h-6 w-6 text-cyan-200" /><h4 className="mt-3 font-semibold text-white">Already know a member?</h4><p className="mt-2 text-sm leading-6 text-slate-300">An existing CK Conflux member can share a registration code with you. Ask them to send it privately—registration codes should never be posted publicly.</p></article>
+            <article className="rounded-2xl border border-cyan-300/30 bg-cyan-400/[0.06] p-5"><ShieldCheck aria-hidden="true" className="h-6 w-6 text-cyan-200" /><h4 className="mt-3 font-semibold text-white">Need a free registration token?</h4><p className="mt-2 text-sm leading-6 text-slate-300">Use the current community registration event after a short anti-automation check. No payment is required.</p><Link to="/register-event" className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-cyan-400 px-4 py-2 font-semibold text-slate-950">Open Autumn 2026 Community Registration</Link></article>
             <article className="rounded-2xl border border-amber-300/30 bg-gradient-to-br from-amber-300/10 to-slate-950/40 p-5 shadow-lg shadow-amber-500/5"><Coffee aria-hidden="true" className="h-6 w-6 text-amber-200" /><h4 className="mt-3 font-semibold text-white">Want to support the community?</h4><p className="mt-2 text-sm leading-6 text-slate-300">Voluntary support helps operate CK Conflux and is another supported path to receive a registration code.</p><ExternalLink href={SUPPORTER_URL} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200/40 bg-amber-300/15 px-4 py-2 font-semibold text-amber-50 transition motion-safe:hover:-translate-y-0.5 hover:bg-amber-300/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"><Coffee aria-hidden="true" className="h-5 w-5" />Buy Me a Coffee</ExternalLink></article>
           </div>
           <p className="mt-5 rounded-xl border border-white/10 bg-slate-950/40 p-4 text-sm leading-6 text-slate-200"><strong className="text-white">Payment is not required to join CK Conflux.</strong> A valid registration code is required regardless of how you receive one. Support is always voluntary.</p>
