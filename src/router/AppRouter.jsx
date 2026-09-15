@@ -20,9 +20,11 @@ import About from '../pages/About';
 import Migrate from '../pages/Migrate';
 import Foundry from '../pages/Foundry';
 import MigrationLayout from '../layout/MigrationLayout';
+import CampaignLayout from '../layout/CampaignLayout';
+import RegisterEvent from '../pages/RegisterEvent';
 import { useRouter } from './Router';
 
-const routes = {'/': <Home />, '/about': <About />, '/join': <Join />, '/migrate': <Migrate />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/foundry': <Foundry />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
+const routes = {'/': <Home />, '/about': <About />, '/join': <Join />, '/migrate': <Migrate />, '/register-event': <RegisterEvent />, '/why-ck-conflux': <WhyCKConflux />, '/matrix': <Matrix />, '/calls': <Calls />, '/membership': <Membership />, '/teamspeak': <TeamSpeak />, '/foundry': <Foundry />, '/security': <Security />, '/help': <Help />, '/support': <Support />, '/status': <Status />, '/privacy': <Privacy />, '/terms': <Terms />, '/rules': <Rules />};
 
 export default function AppRouter() {
   const { pathname, navigationKey } = useRouter();
@@ -32,6 +34,10 @@ export default function AppRouter() {
     const heading = document.querySelector('#main-content h1');
     if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus(); }
   }, [navigationKey]);
-  const Layout = pathname === '/migrate' ? MigrationLayout : SiteLayout;
-  return <><Metadata pathname={pathname} /><Layout>{page}</Layout></>;
+  const layout = pathname === '/migrate'
+    ? <MigrationLayout>{page}</MigrationLayout>
+    : pathname === '/register-event'
+      ? <CampaignLayout label="Registration event">{page}</CampaignLayout>
+      : <SiteLayout>{page}</SiteLayout>;
+  return <><Metadata pathname={pathname} />{layout}</>;
 }
