@@ -60,7 +60,11 @@ export default function RegisterEvent() {
         const body = await response.json();
         if (!active || controller.signal.aborted) return;
         if (typeof body?.registration_token !== 'string' || !body.registration_token) { setState('unavailable'); return; }
-        setResult({ campaign: body.campaign || REGISTRATION_EVENT.campaign, token: body.registration_token, expiresAt: body.expires_at || null });
+        setResult({
+          campaign: typeof body.campaign === 'string' && body.campaign.trim() ? body.campaign : REGISTRATION_EVENT.campaign,
+          token: body.registration_token,
+          expiresAt: typeof body.expires_at === 'string' && body.expires_at.trim() ? body.expires_at : null,
+        });
         setState('success');
       } catch {
         if (active) setState('unavailable');
