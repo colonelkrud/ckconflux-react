@@ -255,7 +255,7 @@ describe('CK Conflux application architecture', () => {
     expect(screen.getByRole('link', { name: 'Buy Me a Coffee' })).toHaveAttribute('href', 'https://buymeacoffee.com/conflux');
     expect(screen.getByRole('heading', { name: 'Already know a member?' }).closest('article')).toHaveTextContent(/share a registration code.*privately/i);
     expect(screen.getByRole('heading', { name: 'Need a free registration token?' }).closest('article')).toHaveTextContent(/No payment is required/i);
-    expect(screen.getByRole('link', { name: 'Open Autumn 2026 Community Registration' })).toHaveAttribute('href', '/register-event');
+    expect(screen.getByRole('link', { name: 'Open community registration' })).toHaveAttribute('href', '/register-event');
     expect(screen.getByRole('heading', { name: 'Want to support the community?' })).toBeInTheDocument();
     expect(screen.getByText(/Payment is not required to join CK Conflux/i).closest('p')).toHaveTextContent(/valid registration code is required regardless.*Support is always voluntary/i);
     expect(screen.getByText(/token, an available username, an email address, and an account password/i)).toBeInTheDocument();

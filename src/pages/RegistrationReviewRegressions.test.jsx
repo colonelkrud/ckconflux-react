@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import RegisterEvent from './RegisterEvent';
@@ -39,8 +39,11 @@ afterEach(() => {
 async function issueToken(fields) {
   // JSON round-tripping models omitted fields and values from the real endpoint.
   const body = JSON.parse(JSON.stringify({ registration_token: FIXTURE_TOKEN, ...fields }));
-  fetch.mockResolvedValue({ ok: true, status: 200, json: async () => body });
+  fetch.mockImplementation((url) => Promise.resolve(url === REGISTRATION_EVENT.configEndpoint
+    ? { status: 200, json: async () => ({ sitekey: 'TEST-ONLY-REVIEW-SITEKEY', action: REGISTRATION_EVENT.action }) }
+    : { ok: true, status: 200, json: async () => body }));
   render(<RegisterEvent />);
+  await waitFor(() => expect(options).toBeDefined());
   await act(async () => { await options.callback('TEST-ONLY-REVIEW-RESPONSE'); });
 }
 
@@ -98,7 +101,8 @@ describe('registration and migration review copy', () => {
       'Need a free registration token?',
       'Want to support the community?',
     ]);
-    expect(screen.getByRole('link', { name: 'Open Autumn 2026 Community Registration' })).toHaveAttribute('href', '/register-event');
+    expect(screen.getByRole('link', { name: 'Open community registration' })).toHaveAttribute('href', '/register-event');
+    expect(screen.queryByText('Open Autumn 2026 Community Registration')).not.toBeInTheDocument();
     expect(screen.getByText('Payment is not required to join CK Conflux.')).toBeInTheDocument();
   });
 

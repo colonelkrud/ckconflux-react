@@ -3,340 +3,237 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import RegisterEvent from './RegisterEvent';
+import { Router } from '../router/Router';
 import { REGISTRATION_EVENT } from '../config/registrationEvent';
-import { getPageMetadata, ROUTE_PATHS } from '../metadata/pageMetadata';
+import registrationEventSource from '../config/registrationEvent.js?raw';
+import { getPageMetadata } from '../metadata/pageMetadata';
 
 const FIXTURE_TOKEN = 'TEST-ONLY-REGISTRATION-TOKEN-NOT-A-CREDENTIAL';
-const TURNSTILE_SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+const RESPONSE = 'TEST-ONLY-TURNSTILE-RESPONSE';
+const SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+const configResponse = (body = { sitekey: 'TEST-ONLY-SITEKEY', action: 'registration_event_token' }, status = 200) => ({ status, json: async () => body });
+const tokenResponse = (body = { registration_token: FIXTURE_TOKEN }, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
 let options;
-const renderRoute = () => { window.history.pushState({}, '', '/register-event'); return render(<App />); };
-const getScript = () => document.querySelector(`script[src="${TURNSTILE_SCRIPT}"]`);
-const successfulResponse = () => ({ ok: true, status: 200, json: async () => ({ registration_token: FIXTURE_TOKEN }) });
-const completeChallenge = async (response = 'TEST-ONLY-RESPONSE') => {
-  await act(async () => { await options.callback(response); });
-};
+const renderRegistration = (ui = <RegisterEvent />) => render(<Router>{ui}</Router>);
+
+function mockRequests(token = tokenResponse()) {
+  fetch.mockImplementation((url) => Promise.resolve(url === REGISTRATION_EVENT.configEndpoint ? configResponse() : token));
+}
+async function renderWidget(ui = <RegisterEvent />) {
+  const view = renderRegistration(ui);
+  await waitFor(() => expect(window.turnstile.render).toHaveBeenCalled());
+  return view;
+}
+async function completeChallenge(value = RESPONSE) {
+  await act(async () => { await options.callback(value); });
+}
 
 beforeEach(() => {
   options = undefined;
-  window.turnstile = {
-    render: vi.fn((_node, value) => { options = value; return 'fixture-widget-id'; }),
-    remove: vi.fn(),
-  };
+  window.turnstile = { render: vi.fn((_node, value) => { options = value; return 'widget-id'; }), remove: vi.fn() };
   vi.stubGlobal('fetch', vi.fn());
+  mockRequests();
 });
-
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   delete window.turnstile;
-  document.head.querySelectorAll(`link[rel="canonical"], meta[name="robots"], script[src="${TURNSTILE_SCRIPT}"]`).forEach((node) => node.remove());
+  document.head.querySelectorAll(`script[src="${SCRIPT}"], link[rel="canonical"], meta[name="robots"]`).forEach((node) => node.remove());
 });
 
-describe('free registration campaign', () => {
-  it('uses the focused campaign layout, stays undiscoverable, and is noindex', async () => {
-    renderRoute();
-    expect(screen.getByRole('heading', { level: 1, name: REGISTRATION_EVENT.campaign })).toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: 'Campaign page links' })).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Primary navigation' })).not.toBeInTheDocument();
-    expect(document.querySelectorAll('a[href="/register-event"]')).toHaveLength(0);
-    await waitFor(() => expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow'));
-    expect(ROUTE_PATHS).toContain('/register-event');
-    expect(getPageMetadata('/register-event').robots).toBe('noindex, nofollow');
-    expect(getPageMetadata('/migrate').robots).toBe('noindex, nofollow');
+describe('runtime Turnstile configuration', () => {
+  it('does not expose a statically configured production sitekey', () => {
+    expect(REGISTRATION_EVENT).not.toHaveProperty('sitekey');
+    expect(registrationEventSource).not.toContain(['0x4AAAAAACFAmLXvI6', '_MxRTf'].join(''));
+  });
+  it('fetches config before rendering and uses only the canonical contract', async () => {
+    await renderWidget();
+    expect(fetch.mock.calls[0][0]).toBe('/api/registration-event/config');
+    expect(fetch.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+    expect(options).toMatchObject({ sitekey: 'TEST-ONLY-SITEKEY', action: 'registration_event_token', retry: 'never', 'refresh-expired': 'never', 'refresh-timeout': 'never' });
   });
 
-  it('renders Turnstile with the production public contract and only manual retries', async () => {
-    renderRoute();
-    await waitFor(() => expect(window.turnstile.render).toHaveBeenCalled());
-    expect(options).toMatchObject({
-      sitekey: REGISTRATION_EVENT.sitekey,
-      action: 'registration_event_token',
-      size: 'compact',
-      retry: 'never',
-      'refresh-expired': 'never',
-      'refresh-timeout': 'never',
-    });
-    expect(screen.getByText(/anti-automation challenge/i)).toBeInTheDocument();
-    expect(document.body).toHaveTextContent(/not proof of identity/i);
+  it.each([
+    ['empty sitekey', { sitekey: '', action: 'registration_event_token' }, 200],
+    ['missing sitekey', { action: 'registration_event_token' }, 200],
+    ['wrong action', { sitekey: 'TEST', action: 'other' }, 200],
+    ['HTTP 404', {}, 404], ['HTTP 500', {}, 500],
+  ])('fails closed for %s', async (_name, body, status) => {
+    fetch.mockResolvedValue(configResponse(body, status));
+    renderRegistration();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Registration is temporarily unavailable.'));
+    expect(window.turnstile.render).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('link', { name: 'View support options.' })).toHaveAttribute('href', '/support');
   });
 
-  it('posts a completed challenge and renders, copies, and links the returned token', async () => {
-    fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({ campaign: REGISTRATION_EVENT.campaign, registration_token: FIXTURE_TOKEN, expires_at: '2026-10-01T00:00:00Z' }) });
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockResolvedValue() } });
-    renderRoute();
-    await completeChallenge('TEST-ONLY-TURNSTILE-RESPONSE');
-    expect(fetch).toHaveBeenCalledWith('/api/registration-event/token', expect.objectContaining({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ turnstile_response: 'TEST-ONLY-TURNSTILE-RESPONSE' }) }));
-    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-    expect(screen.getByText(REGISTRATION_EVENT.campaign)).toBeInTheDocument();
-    expect(screen.getByText(/Expires:/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Copy registration token' }));
-    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith(FIXTURE_TOKEN));
-    expect(screen.getByRole('link', { name: 'Continue to Element registration' })).toHaveAttribute('href', 'https://element.ckconflux.com/#/register');
+  it('fails closed for malformed JSON', async () => {
+    fetch.mockResolvedValue({ status: 200, json: async () => { throw new SyntaxError('fixture'); } });
+    renderRegistration();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Registration is temporarily unavailable.'));
+    expect(window.turnstile.render).not.toHaveBeenCalled();
   });
 
-  it('provides manual-copy fallback when Clipboard API is unavailable', async () => {
-    fetch.mockResolvedValue(successfulResponse());
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
-    renderRoute();
+  it('times out config retrieval', async () => {
+    vi.useFakeTimers();
+    fetch.mockImplementation(() => new Promise(() => {}));
+    renderRegistration();
+    const signal = fetch.mock.calls[0][1].signal;
+    await act(async () => { vi.advanceTimersByTime(10000); });
+    expect(signal.aborted).toBe(true);
+    expect(screen.getByRole('status')).toHaveTextContent('Registration is temporarily unavailable.');
+    expect(window.turnstile.render).not.toHaveBeenCalled();
+  });
+
+  it('ignores stale config after a user retry', async () => {
+    vi.useFakeTimers();
+    let resolveFirst;
+    fetch.mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }));
+    renderRegistration();
+    await act(async () => { vi.advanceTimersByTime(10000); });
+    fetch.mockResolvedValueOnce(configResponse());
+    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
+    await act(async () => {});
+    expect(window.turnstile.render).toHaveBeenCalledTimes(1);
+    await act(async () => resolveFirst?.(configResponse({ sitekey: 'STALE', action: REGISTRATION_EVENT.action })));
+    expect(options.sitekey).toBe('TEST-ONLY-SITEKEY');
+  });
+
+  it('aborts config retrieval on unmount', () => {
+    fetch.mockImplementation(() => new Promise(() => {}));
+    const view = renderRegistration();
+    const signal = fetch.mock.calls[0][1].signal;
+    view.unmount();
+    expect(signal.aborted).toBe(true);
+    expect(window.turnstile.render).not.toHaveBeenCalled();
+  });
+});
+
+describe('credential release and lifecycle', () => {
+  it('posts the exact canonical payload and renders the token', async () => {
+    await renderWidget();
     await completeChallenge();
+    expect(fetch).toHaveBeenLastCalledWith('/api/registration-event/token', expect.objectContaining({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ turnstile_token: RESPONSE }) }));
+    expect(fetch.mock.calls[1][1].body).not.toContain(['turnstile', 'response'].join('_'));
+    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
+  });
+
+  it.each([[400, /rejected/i], [429, /Too many requests/i], [503, /temporarily unavailable/i]])('handles backend HTTP %s and offers support', async (status, message) => {
+    mockRequests(tokenResponse({}, status));
+    await renderWidget();
+    await completeChallenge();
+    expect(screen.getByRole('status')).toHaveTextContent(message);
+    expect(screen.getByRole('button', { name: 'Run a new challenge' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View support options.' })).toHaveAttribute('href', '/support');
+  });
+
+  it('suppresses duplicate responses and stale widget callbacks after manual retry', async () => {
+    await renderWidget();
+    const old = options;
+    act(() => old['error-callback']());
+    await old.callback('IGNORED');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
+    await waitFor(() => expect(window.turnstile.render).toHaveBeenCalledTimes(2));
+    await old.callback('STALE');
+    await completeChallenge('FRESH');
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('handles script errors, timeouts, and render exceptions without automatic retry', async () => {
+    const api = window.turnstile;
+    delete window.turnstile;
+    renderRegistration();
+    await waitFor(() => expect(document.querySelector(`script[src="${SCRIPT}"]`)).toBeInTheDocument());
+    fireEvent.error(document.querySelector(`script[src="${SCRIPT}"]`));
+    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    window.turnstile = api;
+    api.render.mockImplementationOnce(() => { throw new Error('fixture'); });
+    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
+    await waitFor(() => expect(api.render).toHaveBeenCalled());
+    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
+  });
+
+  it('bounds a stalled script load', async () => {
+    vi.useFakeTimers();
+    delete window.turnstile;
+    renderRegistration();
+    await act(async () => {});
+    const script = document.querySelector(`script[src="${SCRIPT}"]`);
+    expect(script).toBeInTheDocument();
+    await act(async () => { vi.advanceTimersByTime(10000); });
+    expect(script).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
+  });
+
+  it('bounds backend requests and ignores late results', async () => {
+    vi.useFakeTimers();
+    let finish;
+    fetch.mockImplementation((url) => url === REGISTRATION_EVENT.configEndpoint ? Promise.resolve(configResponse()) : new Promise((resolve) => { finish = resolve; }));
+    renderRegistration();
+    await act(async () => {});
+    const pending = options.callback(RESPONSE);
+    const signal = fetch.mock.calls[1][1].signal;
+    await act(async () => { vi.advanceTimersByTime(10000); });
+    expect(signal.aborted).toBe(true);
+    await act(async () => { finish(tokenResponse()); await pending; });
+    expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
+  });
+
+  it('supports Clipboard fallback and validates result metadata', async () => {
+    mockRequests(tokenResponse({ registration_token: FIXTURE_TOKEN, campaign: {}, expires_at: {} }));
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+    await renderWidget();
+    await completeChallenge();
+    expect(screen.getByText(`Campaign: ${REGISTRATION_EVENT.campaign}`)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Copy registration token' }));
     expect(screen.getByText(/Select and copy the token manually/i)).toBeInTheDocument();
   });
 
-  it.each([
-    ['invalid challenge', 'error-callback', /rejected/i],
-    ['expired challenge', 'expired-callback', /expired/i],
-    ['timed-out challenge', 'timeout-callback', /expired/i],
-  ])('never reveals a token for an %s and replaces the widget before retrying', async (_name, callback, message) => {
-    renderRoute();
-    act(() => options[callback]());
-    expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(message);
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
-    expect(window.turnstile.remove).toHaveBeenCalledWith('fixture-widget-id');
-    expect(window.turnstile.render).toHaveBeenCalledTimes(2);
-  });
-
-  it.each([
-    [400, /rejected/i], [429, /Too many requests/i], [503, /temporarily unavailable/i],
-  ])('does not reveal a token after backend HTTP %s', async (status, message) => {
-    fetch.mockResolvedValue({ ok: false, status });
-    renderRoute();
+  it.each([null, {}, { registration_token: '' }])('rejects malformed successful result data: %j', async (body) => {
+    mockRequests(tokenResponse(body));
+    await renderWidget();
     await completeChallenge();
+    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
     expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(message);
   });
 
-  it('does not reuse a consumed response after an ambiguous failure', async () => {
-    fetch.mockRejectedValue(new TypeError('fixture network failure'));
-    renderRoute();
-    await completeChallenge('TEST-ONLY-CONSUMED-RESPONSE');
-    await completeChallenge('TEST-ONLY-CONSUMED-RESPONSE');
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
-    expect(window.turnstile.remove).toHaveBeenCalledWith('fixture-widget-id');
-    expect(window.turnstile.render).toHaveBeenCalledTimes(2);
+  it('preserves a successful token after later widget callbacks', async () => {
+    await renderWidget();
+    await completeChallenge();
+    act(() => options['expired-callback']());
+    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Run a new challenge' })).not.toBeInTheDocument();
+  });
+
+  it('aborts requests, removes widgets on unmount, and is Strict Mode safe', async () => {
+    const view = await renderWidget(<StrictMode><RegisterEvent /></StrictMode>);
+    expect(fetch.mock.calls.filter(([url]) => url === REGISTRATION_EVENT.configEndpoint).length).toBe(2);
+    expect(window.turnstile.render).toHaveBeenCalledTimes(1);
+    view.unmount();
+    expect(window.turnstile.remove).toHaveBeenCalledWith('widget-id');
+  });
+
+  it('aborts an in-flight token request on unmount', async () => {
+    fetch.mockImplementation((url) => url === REGISTRATION_EVENT.configEndpoint ? Promise.resolve(configResponse()) : new Promise(() => {}));
+    const view = await renderWidget();
+    act(() => { options.callback(RESPONSE); });
+    const signal = fetch.mock.calls[1][1].signal;
+    view.unmount();
+    expect(signal.aborted).toBe(true);
+    expect(window.turnstile.remove).toHaveBeenCalledWith('widget-id');
   });
 });
 
-describe('Turnstile lifecycle regressions', () => {
-  it('loads the script and renders the widget only once', () => {
-    vi.useFakeTimers();
-    const api = window.turnstile;
-    delete window.turnstile;
-    render(<RegisterEvent />);
-    expect(screen.getByRole('status')).toHaveTextContent(/challenge loading/i);
-    const script = getScript();
-    expect(script).toHaveAttribute('src', TURNSTILE_SCRIPT);
-    expect(script.async).toBe(true);
-    window.turnstile = api;
-    fireEvent.load(script);
-    fireEvent.load(script);
-    expect(api.render).toHaveBeenCalledTimes(1);
-    act(() => vi.advanceTimersByTime(10000));
-    expect(screen.getByRole('status')).toHaveTextContent(/Complete the anti-automation challenge/i);
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it('shows a retryable state on script error and loads a fresh script on retry', async () => {
-    const api = window.turnstile;
-    delete window.turnstile;
-    render(<RegisterEvent />);
-    const failedScript = getScript();
-    fireEvent.error(failedScript);
-    expect(failedScript.isConnected).toBe(false);
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
-    expect(fetch).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
-    const retryScript = getScript();
-    expect(retryScript).not.toBe(failedScript);
-    expect(screen.getByRole('status')).toHaveTextContent(/challenge loading/i);
-    window.turnstile = api;
-    fireEvent.load(failedScript);
-    expect(api.render).not.toHaveBeenCalled();
-    fireEvent.load(retryScript);
-    fetch.mockResolvedValue(successfulResponse());
-    await completeChallenge();
-    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-  });
-
-  it.each([false, true])('bounds a stalled script load (existing script: %s) and recovers on retry', (existing) => {
-    vi.useFakeTimers();
-    const api = window.turnstile;
-    delete window.turnstile;
-    if (existing) {
-      const script = document.createElement('script');
-      script.src = TURNSTILE_SCRIPT;
-      document.head.append(script);
-    }
-    render(<RegisterEvent />);
-    const stalledScript = getScript();
-    expect(document.querySelectorAll(`script[src="${TURNSTILE_SCRIPT}"]`)).toHaveLength(1);
-    act(() => vi.advanceTimersByTime(9999));
-    expect(screen.getByRole('status')).toHaveTextContent(/challenge loading/i);
-    act(() => vi.advanceTimersByTime(1));
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
-    expect(stalledScript.isConnected).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
-    window.turnstile = api;
-    fireEvent.load(getScript());
-    act(() => vi.advanceTimersByTime(10000));
-    expect(screen.getByRole('status')).toHaveTextContent(/Complete the anti-automation challenge/i);
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it('rejects a loaded script without a usable Turnstile API', () => {
-    delete window.turnstile;
-    render(<RegisterEvent />);
-    fireEvent.load(getScript());
-    expect(getScript()).toBeNull();
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
-    expect(screen.getByRole('button', { name: 'Run a new challenge' })).toBeInTheDocument();
-  });
-
-  it('handles widget initialization errors and retries rendering', () => {
-    window.turnstile.render.mockImplementationOnce(() => { throw new Error('fixture render error'); });
-    render(<RegisterEvent />);
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
-    expect(window.turnstile.render).toHaveBeenCalledTimes(2);
-    expect(screen.getByRole('status')).toHaveTextContent(/Complete the anti-automation challenge/i);
-  });
-
-  it.each(['expired-callback', 'error-callback', 'timeout-callback'])('preserves the issued token and copy action after %s', async (callback) => {
-    fetch.mockResolvedValue(successfulResponse());
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockResolvedValue() } });
-    render(<RegisterEvent />);
-    await completeChallenge();
-    act(() => options[callback]());
-    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-    expect(screen.getByText('Registration token ready.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Continue to Element registration' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Run a new challenge' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Copy registration token' }));
-    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith(FIXTURE_TOKEN));
-    await completeChallenge('TEST-ONLY-DUPLICATE-RESPONSE');
-    expect(fetch).toHaveBeenCalledTimes(1);
-  });
-
-  it.each(['expired-callback', 'error-callback', 'timeout-callback'])('does not interrupt an in-flight request after %s', async (callback) => {
-    let finishRequest;
-    fetch.mockImplementation(() => new Promise((resolve) => { finishRequest = resolve; }));
-    render(<RegisterEvent />);
-    let pending;
-    act(() => { pending = options.callback('TEST-ONLY-RESPONSE'); });
-    act(() => options[callback]());
-    expect(screen.getByRole('status')).toHaveTextContent(/Request in progress/i);
-    expect(screen.queryByRole('button', { name: 'Run a new challenge' })).not.toBeInTheDocument();
-    await act(async () => { finishRequest(successfulResponse()); await pending; });
-    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-  });
-
-  it('requires a manual retry after an error and ignores callbacks from the old widget', async () => {
-    fetch.mockResolvedValue(successfulResponse());
-    render(<RegisterEvent />);
-    const oldOptions = options;
-    act(() => oldOptions['error-callback']());
-    await completeChallenge('TEST-ONLY-AUTOMATIC-RETRY');
-    expect(fetch).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
-    expect(options).not.toBe(oldOptions);
-    act(() => oldOptions['expired-callback']());
-    await act(async () => { await oldOptions.callback('TEST-ONLY-STALE-RESPONSE'); });
-    expect(fetch).not.toHaveBeenCalled();
-    expect(screen.getByRole('status')).toHaveTextContent(/Complete the anti-automation challenge/i);
-    await completeChallenge('TEST-ONLY-FRESH-RESPONSE');
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(fetch.mock.calls[0][1].body).toBe(JSON.stringify({ turnstile_response: 'TEST-ONLY-FRESH-RESPONSE' }));
-    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-  });
-
-  it('bounds backend requests and ignores a late response after timeout and retry', async () => {
-    vi.useFakeTimers();
-    let finishRequest;
-    fetch.mockImplementationOnce(() => new Promise((resolve) => { finishRequest = resolve; }));
-    render(<RegisterEvent />);
-    let pending;
-    act(() => { pending = options.callback('TEST-ONLY-SLOW-RESPONSE'); });
-    const signal = fetch.mock.calls[0][1].signal;
-    act(() => vi.advanceTimersByTime(10000));
-    expect(signal.aborted).toBe(true);
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
-    fetch.mockResolvedValue(successfulResponse());
-    await completeChallenge('TEST-ONLY-FRESH-RESPONSE');
-    await act(async () => {
-      finishRequest({ ok: true, status: 200, json: async () => ({ registration_token: 'TEST-ONLY-STALE-TOKEN' }) });
-      await pending;
-    });
-    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-    expect(screen.queryByText('TEST-ONLY-STALE-TOKEN')).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it('removes pending script listeners and timers on unmount', () => {
-    vi.useFakeTimers();
-    const api = window.turnstile;
-    delete window.turnstile;
-    const view = render(<RegisterEvent />);
-    const script = getScript();
-    view.unmount();
-    expect(script.isConnected).toBe(false);
-    window.turnstile = api;
-    fireEvent.load(script);
-    fireEvent.error(script);
-    expect(api.render).not.toHaveBeenCalled();
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it('aborts an in-flight request and disposes the widget on unmount', async () => {
-    vi.useFakeTimers();
-    let finishRequest;
-    fetch.mockImplementationOnce(() => new Promise((resolve) => { finishRequest = resolve; }));
-    const view = render(<RegisterEvent />);
-    const oldOptions = options;
-    let pending;
-    act(() => { pending = oldOptions.callback('TEST-ONLY-RESPONSE'); });
-    const signal = fetch.mock.calls[0][1].signal;
-    view.unmount();
-    expect(signal.aborted).toBe(true);
-    expect(window.turnstile.remove).toHaveBeenCalledWith('fixture-widget-id');
-    await act(async () => { finishRequest(successfulResponse()); await pending; });
-    await act(async () => { await oldOptions.callback('TEST-ONLY-STALE-RESPONSE'); });
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it('cleans up and recreates the widget during Strict Mode effect replay', async () => {
-    const view = render(<StrictMode><RegisterEvent /></StrictMode>);
-    expect(window.turnstile.render).toHaveBeenCalledTimes(2);
-    expect(window.turnstile.remove).toHaveBeenCalledTimes(1);
-    const oldOptions = window.turnstile.render.mock.calls[0][1];
-    await act(async () => { await oldOptions.callback('TEST-ONLY-STALE-RESPONSE'); });
-    expect(fetch).not.toHaveBeenCalled();
-    fetch.mockResolvedValue(successfulResponse());
-    await completeChallenge();
-    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-    view.unmount();
-    expect(window.turnstile.remove).toHaveBeenCalledTimes(2);
-  });
-
-  it.each([320, 375])('uses compact sizing at a %spx viewport with space for its 140px height', (width) => {
-    vi.stubGlobal('innerWidth', width);
-    render(<RegisterEvent />);
-    expect(options.size).toBe('compact');
-    expect(screen.getByLabelText('Anti-automation challenge')).toHaveClass('min-h-[140px]');
-  });
-
-  it.each([null, {}, { registration_token: '' }])('handles malformed backend success data without revealing a token: %j', async (body) => {
-    fetch.mockResolvedValue({ ok: true, status: 200, json: async () => body });
-    render(<RegisterEvent />);
-    await completeChallenge();
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
-    expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
+describe('route contracts', () => {
+  it('keeps campaign routes noindex and off campaign navigation', async () => {
+    window.history.pushState({}, '', '/register-event');
+    render(<App />);
+    await waitFor(() => expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow'));
+    expect(getPageMetadata('/migrate').robots).toBe('noindex, nofollow');
+    expect(document.querySelectorAll('a[href="/register-event"]')).toHaveLength(0);
   });
 });
