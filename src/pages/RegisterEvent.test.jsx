@@ -63,16 +63,16 @@ describe('runtime Turnstile configuration', () => {
   ])('fails closed for %s', async (_name, body, status) => {
     fetch.mockResolvedValue(configResponse(body, status));
     renderRegistration();
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Registration is temporarily unavailable.'));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Registration is temporarily unavailable'));
     expect(window.turnstile.render).not.toHaveBeenCalled();
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('link', { name: 'View support options.' })).toHaveAttribute('href', '/support');
+    expect(screen.getByRole('link', { name: 'View support options' })).toHaveAttribute('href', '/support');
   });
 
   it('fails closed for malformed JSON', async () => {
     fetch.mockResolvedValue({ status: 200, json: async () => { throw new SyntaxError('fixture'); } });
     renderRegistration();
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Registration is temporarily unavailable.'));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Registration is temporarily unavailable'));
     expect(window.turnstile.render).not.toHaveBeenCalled();
   });
 
@@ -83,7 +83,7 @@ describe('runtime Turnstile configuration', () => {
     const signal = fetch.mock.calls[0][1].signal;
     await act(async () => { vi.advanceTimersByTime(10000); });
     expect(signal.aborted).toBe(true);
-    expect(screen.getByRole('status')).toHaveTextContent('Registration is temporarily unavailable.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Registration is temporarily unavailable');
     expect(window.turnstile.render).not.toHaveBeenCalled();
   });
 
@@ -94,7 +94,7 @@ describe('runtime Turnstile configuration', () => {
     renderRegistration();
     await act(async () => { vi.advanceTimersByTime(10000); });
     fetch.mockResolvedValueOnce(configResponse());
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await act(async () => {});
     expect(window.turnstile.render).toHaveBeenCalledTimes(1);
     await act(async () => resolveFirst?.(configResponse({ sitekey: 'STALE', action: REGISTRATION_EVENT.action })));
@@ -112,21 +112,71 @@ describe('runtime Turnstile configuration', () => {
 });
 
 describe('credential release and lifecycle', () => {
+  it('moves from a compact loading state to focused challenge guidance', async () => {
+    let resolveConfig;
+    fetch.mockImplementation(() => new Promise((resolve) => { resolveConfig = resolve; }));
+    renderRegistration();
+
+    expect(screen.getByRole('status')).toHaveTextContent('Preparing secure registration');
+    expect(screen.queryByRole('button', { name: 'Copy registration token' })).not.toBeInTheDocument();
+    await act(async () => resolveConfig(configResponse()));
+
+    expect(screen.getByRole('heading', { name: 'Request a free registration token' })).toBeInTheDocument();
+    expect(screen.getByText('Complete this quick security check to continue.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Security check')).toBeVisible();
+  });
+
+  it('replaces the consumed challenge with progress while the request is pending', async () => {
+    let finishRequest;
+    fetch.mockImplementation((url) => url === REGISTRATION_EVENT.configEndpoint
+      ? Promise.resolve(configResponse())
+      : new Promise((resolve) => { finishRequest = resolve; }));
+    await renderWidget();
+
+    act(() => { options.callback(RESPONSE); });
+    expect(screen.getByRole('status')).toHaveTextContent('Verification complete');
+    expect(screen.getByText('Preparing your registration token…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Security check').parentElement).toHaveClass('hidden');
+    expect(screen.getByLabelText('Security check').parentElement).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
+
+    await act(async () => finishRequest(tokenResponse()));
+  });
+
   it('posts the exact canonical payload and renders the token', async () => {
     await renderWidget();
     await completeChallenge();
     expect(fetch).toHaveBeenLastCalledWith('/api/registration-event/token', expect.objectContaining({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ turnstile_token: RESPONSE }) }));
     expect(fetch.mock.calls[1][1].body).not.toContain(['turnstile', 'response'].join('_'));
     expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
+    expect(screen.getByLabelText('Registration token')).toHaveClass('select-all');
+    expect(screen.getByRole('link', { name: 'Continue to Element registration' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Security check').parentElement).toHaveClass('hidden');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it.each([[400, /rejected/i], [429, /Too many requests/i], [503, /temporarily unavailable/i]])('handles backend HTTP %s and offers support', async (status, message) => {
+  it('announces a successful copy without hiding the selectable token', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    await renderWidget();
+    await completeChallenge();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy registration token' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Copy registration token' })).toHaveTextContent('Copied'));
+    expect(screen.getByRole('status')).toHaveTextContent('Registration token copied.');
+    expect(writeText).toHaveBeenCalledWith(FIXTURE_TOKEN);
+    expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
+  });
+
+  it.each([[400, /could not be accepted/i], [429, /Too many registration requests/i], [503, /temporarily unavailable/i]])('handles backend HTTP %s with a distinct error state', async (status, message) => {
     mockRequests(tokenResponse({}, status));
     await renderWidget();
     await completeChallenge();
-    expect(screen.getByRole('status')).toHaveTextContent(message);
-    expect(screen.getByRole('button', { name: 'Run a new challenge' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'View support options.' })).toHaveAttribute('href', '/support');
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    if (status >= 500) expect(screen.getByRole('link', { name: 'View support options' })).toHaveAttribute('href', '/support');
+    else expect(screen.queryByRole('link', { name: 'View support options' })).not.toBeInTheDocument();
   });
 
   it('suppresses duplicate responses and stale widget callbacks after manual retry', async () => {
@@ -135,7 +185,7 @@ describe('credential release and lifecycle', () => {
     act(() => old['error-callback']());
     await old.callback('IGNORED');
     expect(fetch).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(window.turnstile.render).toHaveBeenCalledTimes(2));
     await old.callback('STALE');
     await completeChallenge('FRESH');
@@ -148,13 +198,13 @@ describe('credential release and lifecycle', () => {
     renderRegistration();
     await waitFor(() => expect(document.querySelector(`script[src="${SCRIPT}"]`)).toBeInTheDocument());
     fireEvent.error(document.querySelector(`script[src="${SCRIPT}"]`));
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/temporarily unavailable/i);
     expect(fetch).toHaveBeenCalledTimes(1);
     window.turnstile = api;
     api.render.mockImplementationOnce(() => { throw new Error('fixture'); });
-    fireEvent.click(screen.getByRole('button', { name: 'Run a new challenge' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(api.render).toHaveBeenCalled());
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/temporarily unavailable/i);
   });
 
   it('bounds a stalled script load', async () => {
@@ -166,7 +216,7 @@ describe('credential release and lifecycle', () => {
     expect(script).toBeInTheDocument();
     await act(async () => { vi.advanceTimersByTime(10000); });
     expect(script).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/temporarily unavailable/i);
   });
 
   it('bounds backend requests and ignores late results', async () => {
@@ -197,7 +247,7 @@ describe('credential release and lifecycle', () => {
     mockRequests(tokenResponse(body));
     await renderWidget();
     await completeChallenge();
-    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/temporarily unavailable/i);
     expect(screen.queryByText(FIXTURE_TOKEN)).not.toBeInTheDocument();
   });
 
@@ -206,7 +256,7 @@ describe('credential release and lifecycle', () => {
     await completeChallenge();
     act(() => options['expired-callback']());
     expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Run a new challenge' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
   });
 
   it('aborts requests, removes widgets on unmount, and is Strict Mode safe', async () => {
