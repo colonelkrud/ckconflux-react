@@ -49,10 +49,10 @@ async function issueToken(fields) {
 
 function expectUsableToken() {
   expect(screen.getByText(FIXTURE_TOKEN)).toBeInTheDocument();
-  expect(screen.getByText('Registration token ready.')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Registration token ready' })).toHaveFocus();
   expect(screen.getByRole('button', { name: 'Copy registration token' })).toBeEnabled();
   expect(screen.getByRole('link', { name: 'Continue to Element registration' })).toHaveAttribute('href', ELEMENT_REGISTRATION_URL);
-  expect(screen.queryByRole('button', { name: 'Run a new challenge' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
 }
 
 function renderRoute(path) {
@@ -65,7 +65,7 @@ describe('registration response metadata validation', () => {
     await issueToken({ campaign, expires_at: FIXTURE_EXPIRY });
     expectUsableToken();
     expect(screen.getByText(`Campaign: ${REGISTRATION_EVENT.campaign}`)).toBeInTheDocument();
-    expect(screen.getByText(FIXTURE_EXPIRY)).toHaveAttribute('datetime', FIXTURE_EXPIRY);
+    expect(document.querySelector('time')).toHaveAttribute('datetime', FIXTURE_EXPIRY);
   });
 
   it.each(INVALID_OPTIONAL_FIELDS)('omits %s expiry metadata without losing the token or campaign', async (_name, expiresAt) => {
@@ -87,7 +87,7 @@ describe('registration response metadata validation', () => {
     await issueToken({ campaign: FIXTURE_CAMPAIGN, expires_at: FIXTURE_EXPIRY });
     expectUsableToken();
     expect(screen.getByText(`Campaign: ${FIXTURE_CAMPAIGN}`)).toBeInTheDocument();
-    expect(screen.getByText(FIXTURE_EXPIRY)).toHaveAttribute('datetime', FIXTURE_EXPIRY);
+    expect(document.querySelector('time')).toHaveAttribute('datetime', FIXTURE_EXPIRY);
   });
 });
 
