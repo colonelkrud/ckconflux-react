@@ -45,7 +45,7 @@ function RequestingState() {
   </div>;
 }
 
-function ErrorState({ state, onRetry }) {
+function ErrorState({ state, onRetry, headingRef }) {
   const content = {
     expired: ["Let's try that again", 'The security check expired before the request completed.'],
     rejected: ["Let's try that again", 'The security check could not be accepted. Complete a new check to retry.'],
@@ -55,7 +55,7 @@ function ErrorState({ state, onRetry }) {
 
   return <div className="text-center" role="alert">
     <TriangleAlert className="mx-auto h-7 w-7 text-amber-200" aria-hidden="true" />
-    <h2 className="mt-4 text-xl font-semibold text-white">{content[0]}</h2>
+    <h2 ref={headingRef} tabIndex="-1" className={`mt-4 text-xl font-semibold text-white ${focusRing}`}>{content[0]}</h2>
     <p className="mt-2 text-sm leading-6 text-slate-300">{content[1]}</p>
     <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
       <button type="button" onClick={onRetry} className={`rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300 ${focusRing}`}>Try again</button>
@@ -92,6 +92,7 @@ function SuccessState({ result, copyState, onCopy, headingRef }) {
 export default function RegisterEvent() {
   const widgetHost = useRef(null);
   const successHeading = useRef(null);
+  const errorHeading = useRef(null);
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState('loading');
   const [result, setResult] = useState(null);
@@ -99,6 +100,7 @@ export default function RegisterEvent() {
 
   useEffect(() => {
     if (state === 'success') successHeading.current?.focus();
+    else if (ERROR_STATES.includes(state)) errorHeading.current?.focus();
   }, [state]);
 
   useEffect(() => {
@@ -272,12 +274,12 @@ export default function RegisterEvent() {
       <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">{REGISTRATION_EVENT.campaign}</h1>
       <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">Get a free CK Conflux registration token after a quick security check. No payment is required. A token lets you begin registration but does not bypass eligibility requirements or community rules.</p>
     </div></section>
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <section className="mx-auto max-w-xl rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.07] p-5 shadow-lg shadow-slate-950/20 sm:p-8" aria-label="Registration token request">
         {state === 'loading' && <LoadingState />}
         {state === 'ready' && <ChallengeState />}
         {(state === 'verified' || state === 'requesting') && <RequestingState />}
-        {ERROR_STATES.includes(state) && <ErrorState state={state} onRetry={retry} />}
+        {ERROR_STATES.includes(state) && <ErrorState state={state} onRetry={retry} headingRef={errorHeading} />}
         {state === 'success' && result && <SuccessState result={result} copyState={copyState} onCopy={copyToken} headingRef={successHeading} />}
         <div className={challengeVisible ? 'mt-5 flex min-w-0 justify-center overflow-hidden' : state === 'loading' ? 'h-0 overflow-hidden' : 'hidden'} aria-hidden={!challengeVisible}>
           <div ref={widgetHost} aria-label="Security check" />
@@ -289,6 +291,6 @@ export default function RegisterEvent() {
         <h2 id="before-register-heading" className="text-base font-semibold text-white">Before you register</h2>
         <p className="mt-2 text-sm leading-6 text-slate-400"><strong className="font-semibold text-slate-200">Payment is not required.</strong> A token permits a registration attempt; the Terms, Server Rules, age, and other eligibility requirements still apply. Registration tokens rotate and eventually expire.</p>
       </aside>
-    </main>
+    </div>
   </>;
 }
