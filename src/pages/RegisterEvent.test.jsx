@@ -174,9 +174,18 @@ describe('credential release and lifecycle', () => {
     await renderWidget();
     await completeChallenge();
     expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(screen.getByRole('alert').querySelector('h2')).toHaveFocus();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     if (status >= 500) expect(screen.getByRole('link', { name: 'View support options' })).toHaveAttribute('href', '/support');
     else expect(screen.queryByRole('link', { name: 'View support options' })).not.toBeInTheDocument();
+  });
+
+  it('moves focus to retry guidance when the challenge expires', async () => {
+    await renderWidget();
+    act(() => options['expired-callback']());
+    expect(screen.getByRole('alert')).toHaveTextContent("Let's try that again");
+    expect(screen.getByRole('alert').querySelector('h2')).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('suppresses duplicate responses and stale widget callbacks after manual retry', async () => {
@@ -283,6 +292,7 @@ describe('route contracts', () => {
     window.history.pushState({}, '', '/register-event');
     render(<App />);
     await waitFor(() => expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow'));
+    expect(screen.getAllByRole('main')).toHaveLength(1);
     expect(getPageMetadata('/migrate').robots).toBe('noindex, nofollow');
     expect(document.querySelectorAll('a[href="/register-event"]')).toHaveLength(0);
   });
